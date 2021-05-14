@@ -5,28 +5,15 @@ import fetch        from 'node-fetch'
 
 import dotenv from 'dotenv'
 dotenv.config()
-const { RITO_ADDRESS, RITO_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
+const { COIN, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
 import * as rpc     from '$lib/rpc-client.js'
 import * as pinata  from '$lib/pinata.js'
-
-// testnet
-let reissue_burn_address = 'n1ReissueAssetXXXXXXXXXXXXXXWG9NLd'
-let network = {
-  messagePrefix: '\x15Rito Signed Message:\n',
-  bech32: null,
-  bip32: {
-    public: 0x43587CD,
-    private: 0x4358391,
-  },
-  pubKeyHash: 0x6F,
-  scriptHash: 0xC4,
-  wif: 0xEF
-}
+import { coins }    from '$lib/coins.js'
 
 async function signRawTransaction(raw_tx) {
   let txFromHex = bitcoin.Transaction.fromHex(raw_tx)
-  let txb = bitcoin.TransactionBuilder.fromTransaction(txFromHex, network)
+  let txb = bitcoin.TransactionBuilder.fromTransaction(txFromHex, coins[COIN].network)
 
   for (let [idx, input] of txFromHex.ins.entries()) {
     let txid = reverse(input.hash).toString('hex')
@@ -36,12 +23,12 @@ async function signRawTransaction(raw_tx) {
       txb.__TX.ins[idx].assetScript = Buffer.Buffer.from(txout.scriptPubKey.hex, 'hex')
     }
 
-    if (txout.scriptPubKey.addresses[0] == RITO_ADDRESS) {
-      let keypair = bitcoin.ECPair.fromWIF(RITO_PRIVKEY, network)
+    if (txout.scriptPubKey.addresses[0] == COIN_ADDRESS) {
+      let keypair = bitcoin.ECPair.fromWIF(COIN_PRIVKEY, coins[COIN].network)
       txb.sign(idx, keypair)
     }
     if (txout.scriptPubKey.addresses[0] == ASSET_ADDRESS) {
-      let keypair = bitcoin.ECPair.fromWIF(ASSET_PRIVKEY, network)
+      let keypair = bitcoin.ECPair.fromWIF(ASSET_PRIVKEY, coins[COIN].network)
       txb.sign(idx, keypair)
     }
   }
@@ -104,16 +91,16 @@ export async function put(req) {
       }
     }
 
-    let burn = 10000000000
-    let fee = 1000000
-
     let utxos = []
     try {
-      utxos = await rpc.getAddressUtxos(RITO_ADDRESS)
+      utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
     } catch (err) {
       console.log(err.message)
       return { status:500, body:{ message:err.message } }
     }
+
+    let burn = coins[COIN].reissueAssetBurnAmount * 100000000
+    let fee = coins[COIN].txFeePerKb * 100000000
 
     let remaining = burn + fee
     let inputs = []
@@ -145,9 +132,9 @@ export async function put(req) {
 
     let outputs = {}
     if (Math.abs(remaining) > 0) {
-      outputs[RITO_ADDRESS] = Math.abs(remaining) / 100000000
+      outputs[COIN_ADDRESS] = Math.abs(remaining) / 100000000
     }
-    outputs[reissue_burn_address] = 100
+    outputs[coins[COIN].reissueAssetBurnAddress] = coins[COIN].reissueAssetBurnAmount
     outputs[ASSET_ADDRESS] = {"reissue":{"asset_name":asset.name,"asset_quantity":reissue_quantity,"ipfs_hash":ipfs_hash}}
 
     let raw_tx = await rpc.createRawTransaction(inputs, outputs)
