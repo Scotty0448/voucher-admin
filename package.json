@@ -29,9 +29,6 @@
 	"type": "module",
 	"dependencies": {
 		"@pinata/sdk": "^1.1.13",
-		"bitcoinjs-lib": "^5.2.0",
-		"buffer": "^5.7.1",
-		"buffer-reverse": "^1.0.1",
 		"crypto-js": "^4.0.0",
 		"dotenv": "^8.2.0",
 		"node-fetch": "^2.6.1",

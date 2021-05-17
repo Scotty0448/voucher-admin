@@ -157,6 +157,19 @@ export function createRawTransaction(inputs, outputs) {
   )
 }
 
+export function signRawTransaction(raw_tx, prev_txs, priv_keys) {
+  return new Promise((resolve, reject) =>
+    rpcClient.signrawtransaction(raw_tx, prev_txs, priv_keys, async (err, ret) => {
+      if (err) {
+        console.log(err)
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  )
+}
+
 export function sendSignedTx(signed_tx) {
   return new Promise((resolve, reject) =>
     rpcClient.sendrawtransaction(signed_tx, (err, ret) => {

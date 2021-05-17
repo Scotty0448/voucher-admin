@@ -1,40 +1,12 @@
-import * as bitcoin from 'bitcoinjs-lib'
-import * as Buffer  from 'buffer'
-import reverse      from 'buffer-reverse'
-import fetch        from 'node-fetch'
-
 import dotenv from 'dotenv'
 dotenv.config()
 const { COIN, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
+import fetch        from 'node-fetch'
+
 import * as rpc     from '$lib/rpc-client.js'
 import * as pinata  from '$lib/pinata.js'
 import { coins }    from '$lib/coins.js'
-
-async function signRawTransaction(raw_tx) {
-  let txFromHex = bitcoin.Transaction.fromHex(raw_tx)
-  let txb = bitcoin.TransactionBuilder.fromTransaction(txFromHex, coins[COIN].network)
-
-  for (let [idx, input] of txFromHex.ins.entries()) {
-    let txid = reverse(input.hash).toString('hex')
-    let txout = await rpc.getTxOut(txid, input.index)
-
-    if (txout.scriptPubKey.type == 'new_asset' || txout.scriptPubKey.type == 'reissue_asset' || txout.scriptPubKey.type == 'transfer_asset') {
-      txb.__TX.ins[idx].assetScript = Buffer.Buffer.from(txout.scriptPubKey.hex, 'hex')
-    }
-
-    if (txout.scriptPubKey.addresses[0] == COIN_ADDRESS) {
-      let keypair = bitcoin.ECPair.fromWIF(COIN_PRIVKEY, coins[COIN].network)
-      txb.sign(idx, keypair)
-    }
-    if (txout.scriptPubKey.addresses[0] == ASSET_ADDRESS) {
-      let keypair = bitcoin.ECPair.fromWIF(ASSET_PRIVKEY, coins[COIN].network)
-      txb.sign(idx, keypair)
-    }
-  }
-
-  return txb.build().toHex()
-}
 
 export async function get(req) {
   try {
@@ -131,15 +103,15 @@ export async function put(req) {
     inputs.push({ txid:asset_utxos[0].txid, vout:asset_utxos[0].outputIndex })
 
     let outputs = {}
-    if (Math.abs(remaining) > 0) {
+    if (remaining < 0) {
       outputs[COIN_ADDRESS] = Math.abs(remaining) / 100000000
     }
     outputs[coins[COIN].reissueAssetBurnAddress] = coins[COIN].reissueAssetBurnAmount
     outputs[ASSET_ADDRESS] = {"reissue":{"asset_name":asset.name,"asset_quantity":reissue_quantity,"ipfs_hash":ipfs_hash}}
 
     let raw_tx = await rpc.createRawTransaction(inputs, outputs)
-    let signed_tx = await signRawTransaction(raw_tx)
-    let tx_id = await rpc.sendSignedTx(signed_tx)
+    let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
+    let tx_id = await rpc.sendSignedTx(signed_tx.hex)
 
     console.log(`updated asset ${asset.name}`, reissue_quantity, ipfs_hash, tx_id)
     return { status:200, body:{ tx_id:tx_id } }
