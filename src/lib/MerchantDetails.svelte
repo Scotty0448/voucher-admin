@@ -134,16 +134,12 @@
         <div class="mt-1 sm:mt-0 sm:col-span-4">
           {#if state == 'add'}
             <button on:click={addMerchant} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
-              {#if wait}
-                <div class="pr-2"><Spinner color="white" /></div>
-              {/if}
+              <div hidden={!wait} class="pr-2"><Spinner color="white" /></div>
               Add Merchant
             </button>
           {:else}
             <button on:click={updateMerchant} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
-              {#if wait}
-                <div class="pr-2"><Spinner color="white" /></div>
-              {/if}
+              <div hidden={!wait} class="pr-2"><Spinner color="white" /></div>
               Update Merchant
             </button>
           {/if}

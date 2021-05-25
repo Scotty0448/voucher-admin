@@ -34,6 +34,18 @@ export function getAssetData(name) {
   })
 }
 
+export function listAssetBalancesByAddress(address) {
+  return new Promise(async (resolve, reject) => {
+    rpcClient.listassetbalancesbyaddress(address, (err, ret) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  })
+}
+
 export function getRawTransaction(txid) {
   return new Promise(async (resolve, reject) => {
     rpcClient.getrawtransaction(txid, true, (err, ret) => {
@@ -138,6 +150,7 @@ export function getAssetUtxos(address, asset_name) {
         console.log(err)
         reject(err)
       } else {
+        ret.result = ret.result.filter(utxo => utxo.satoshis > 0)
         resolve(ret.result)
       }
     })

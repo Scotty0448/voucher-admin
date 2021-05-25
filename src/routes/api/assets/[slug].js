@@ -18,6 +18,8 @@ export async function get(req) {
       asset = await rpc.getAssetDataWithMempool(name, ASSET_ADDRESS)
     }
     if (asset) {
+      let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
+      asset.balance = asset_balances[name] || 0
       if (asset.ipfs_hash) {
         let resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
         if (resp.status == 200) {
@@ -117,6 +119,89 @@ export async function put(req) {
     return { status:200, body:{ tx_id:tx_id } }
   } catch(err) {
     console.log(err)
+    return { status:500, body:{ message:err.message } }
+  }
+}
+
+export async function post(req) {
+  try {
+    let name = req.params.slug.replace( /\|/g, '/' )
+    let address = JSON.parse(req.body).address
+    let qty = JSON.parse(req.body).qty
+
+    if (qty) {
+      if (qty < 1)           { return { status:299, body:{ message:'The quantity must be greater than zero' } } }
+      if (qty % 1 != 0)      { return { status:299, body:{ message:'The quantity must be a whole number' } } }
+    } else {
+      return { status:299, body:{ message:'A quantity must be entered' } }
+    }
+
+    let utxos = []
+    try {
+      utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
+    } catch (err) {
+      console.log(err.message)
+      return { status:500, body:{ message:err.message } }
+    }
+
+    let fee = coins[COIN].txFeePerKb * 100000000
+
+    let remaining = fee
+    let inputs = []
+    for (let utxo of utxos) {
+      inputs.push({ txid:utxo.txid, vout:utxo.outputIndex })
+      remaining -= Number(utxo.satoshis)
+      if (remaining <= 0) {
+        break
+      }
+    }
+    if (remaining > 0) {
+      console.log('Insufficient funds for fee')
+      return { status:500, body:{ message:'Insufficient funds for fee' } }
+    }
+
+    let asset_utxos = []
+    try {
+      asset_utxos = await rpc.getAssetUtxos(ASSET_ADDRESS, name)
+      if (asset_utxos.length == 0) {
+        console.log('Insufficient quantity available')
+        return { status:500, body:{ message:'Insufficient quantity available' } }
+      }
+    } catch (err) {
+      console.log(err.message)
+      return { status:500, body:{ message:err.message } }
+    }
+
+    let remaining_qty = qty
+    for (let asset_utxo of asset_utxos) {
+      inputs.push({ txid:asset_utxo.txid, vout:asset_utxo.outputIndex })
+      remaining_qty -= Math.round(asset_utxo.satoshis / 100000000)
+      if (remaining_qty <= 0) {
+        break
+      }
+    }
+    if (remaining_qty > 0) {
+      return_error(res, 'Insufficient quantity available')
+      return { status:500, body:{ message:'Insufficient quantity available' } }
+    }
+
+    let outputs = {}
+    if (remaining < 0) {
+      outputs[COIN_ADDRESS] = Math.abs(remaining) / 100000000
+    }
+    outputs[address] = JSON.parse(`{"transfer":{"${name}":${qty}}}`)
+    if (Math.abs(remaining_qty) > 0) {
+      outputs[ASSET_ADDRESS] = JSON.parse(`{"transfer":{"${name}":${Math.abs(remaining_qty)}}}`)
+    }
+
+    let raw_tx = await rpc.createRawTransaction(inputs, outputs)
+    let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
+    let tx_id = await rpc.sendSignedTx(signed_tx.hex)
+
+    console.log('sent asset', name, qty, tx_id)
+    return { status:200, body:{ tx_id:tx_id } }
+  } catch(err) {
+    console.log(err.message)
     return { status:500, body:{ message:err.message } }
   }
 }

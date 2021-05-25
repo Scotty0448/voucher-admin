@@ -1,24 +1,14 @@
 <script>
-  import { authorized } from '$lib/local_stores.js'
-
-  import Spinner from '$lib/Spinner.svelte'
+  import AddVoucher			from '$lib/AddVoucher.svelte'
+  import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
+  import SendVoucher		from '$lib/SendVoucher.svelte'
 
   export let asset
 
   let vouchers = []
   let selected_voucher
   let voucher
-  let message = ''
-  let error_message = ''
-  let wait = false
   let state = 'edit'
-
-  $: initMessages(asset.name)
-
-  function initMessages(name) {
-    message = ''
-    error_message = ''
-  }
 
   async function loadVouchers(merchant) {
     vouchers = []
@@ -41,66 +31,13 @@
   async function select_voucher(idx) {
     selected_voucher = idx
     voucher = vouchers[selected_voucher]
-    initMessages('')
     state = 'edit'
   }
 
   async function addNewVoucher() {
     selected_voucher = -1
-    initMessages('')
     voucher = { name:asset.name+'/', amount:'', info:{title:''} }
     state = 'add'
-  }
-
-  async function addVoucher() {
-    if (!$authorized) {
-      error_message = 'You are not authorized to add a voucher.'
-      message = ''
-      return
-    }
-    try {
-      wait = true
-      error_message = ''
-      message = ''
-      let resp = await fetch('/api/assets', { method:'POST', body:JSON.stringify(voucher) })
-      let result = await resp.json()
-      if (resp.status == 201) {
-        vouchers = [...vouchers, voucher]
-        voucher = {name:asset.name+'/', amount:'', info:{title:''}}
-        message = 'Added successfully'
-      } else {
-        error_message = result.message
-      }
-    } catch(err) {
-      error_message = err.message
-    }
-    wait = false
-  }
-
-  async function updateVoucher() {
-    if (!$authorized) {
-      error_message = 'You are not authorized to update a voucher.'
-      return
-    }
-    try {
-      wait = true
-      error_message = ''
-      message = ''
-      let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}`, { method:'PUT', body:JSON.stringify(voucher) })
-      let result = await resp.json()
-      if (resp.status == 200) {
-        message = 'Updated successfully'
-        vouchers[selected_voucher] = voucher
-      } else {
-        error_message = result.message
-        if (error_message == 'The quantity cannot be decreased') {
-          voucher.amount = result.org_amount
-        }
-      }
-    } catch(err) {
-      error_message = err.message
-    }
-    wait = false
   }
 </script>
 
@@ -119,7 +56,10 @@
                 Name
               </th>
               <th scope="col" class="px-5 sm:px-3 py-3 text-left text-sm font-medium text-gray-900 tracking-wider">
-                Qty
+                Issued
+              </th>
+              <th scope="col" class="px-5 sm:px-3 py-3 text-left text-sm font-medium text-gray-900 tracking-wider">
+                Held
               </th>
               <th scope="col" class="px-5 sm:px-3 py-3 text-left text-sm font-medium text-gray-900 tracking-wider">
                 Title
@@ -136,6 +76,9 @@
                   {#if voucher.amount > 0}
                     {voucher.amount}
                   {/if}
+                </td>
+                <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
+                  {voucher.balance}
                 </td>
                 <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
                   {#if voucher.info}{voucher.info.title}{/if}
@@ -157,67 +100,12 @@
 {#if voucher}
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
-
-      <div class="mt-6 sm:mt-5 space-y-6 sm:space-y-3">
-        {#if state == 'add'}
-          <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2 sm:pb-3">
-            <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-              Asset Name
-            </label>
-            <div class="mt-1 sm:mt-0 sm:col-span-4">
-              <input type="text" bind:value="{voucher.name}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
-            </div>
-          </div>
-        {/if}
-
-        <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2 sm:pb-3">
-          <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-            Title
-          </label>
-          <div class="mt-1 sm:mt-0 sm:col-span-4">
-            <input type="text" bind:value="{voucher.info.title}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
-          </div>
-        </div>
-
-        <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2">
-          <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
-            Quantity
-          </label>
-          <div class="mt-1 sm:mt-0 sm:col-span-1">
-            <input type="text" bind:value="{voucher.amount}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
-          </div>
-        </div>
-      </div>
-
-      <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start pt-6 sm:pt-8">
-        <label></label>
-        <div class="mt-1 sm:mt-0 sm:col-span-4">
-          {#if state == 'add'}
-            <button on:click={addVoucher} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
-              {#if wait}
-                <div class="pr-2"><Spinner color="white" /></div>
-              {/if}
-              Add Voucher
-            </button>
-          {:else}
-            <button on:click={updateVoucher} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
-              {#if wait}
-                <div class="pr-2"><Spinner color="white" /></div>
-              {/if}
-              Update Voucher
-            </button>
-          {/if}
-          <div class="mt-6 text-sm">
-            <div class="text-green-700">
-              {message}
-            </div>
-            <div class="text-red-600">
-              {error_message}
-            </div>
-          </div>
-        </div>
-      </div>
-
+      {#if state == 'add'}
+        <AddVoucher {voucher} />
+      {:else}
+        <UpdateVoucher {voucher} />
+        <SendVoucher {voucher} />
+      {/if}
     </div>
   </div>
 {/if}
