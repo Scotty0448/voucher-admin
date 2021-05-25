@@ -31,6 +31,7 @@
 		"@pinata/sdk": "^1.1.13",
 		"crypto-js": "^4.0.0",
 		"dotenv": "^8.2.0",
+		"html5-qrcode": "^2.0.3",
 		"node-fetch": "^2.6.1",
 		"ravend-rpc": "RavenDevKit/ravend-rpc#assets",
 		"svelte-persistent-store": "^0.1.6"
