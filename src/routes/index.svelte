@@ -1,5 +1,5 @@
 <script>
-	import md5 from 'crypto-js/md5.js'
+	import { md5 } from 'crypto-js/md5.js'
 
 	import { authorized } from '$lib/local_stores.js'
 
@@ -71,13 +71,13 @@
 		      <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none md:order-last" tabindex="0">
 		        <!-- Breadcrumb -->
 		        <nav class="flex items-start px-4 pt-4 sm:px-6 lg:px-8 md:hidden" aria-label="Breadcrumb">
-		          <a href="#" on:click="{()=>state='list'}" class="inline-flex items-center space-x-1 text-sm font-medium text-gray-900">
+		          <div on:click="{()=>state='list'}" class="inline-flex items-center space-x-1 text-sm font-medium text-gray-900">
 		            <!-- Heroicon name: solid/chevron-left -->
 		            <svg class="-ml-1.5 h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
 		              <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
 		            </svg>
 		            <span>Merchants</span>
-		          </a>
+		          </div>
 		        </nav>
 
 						{#if selected_merchant != undefined}
@@ -124,14 +124,14 @@
 			              <li>
 			                <div class="relative px-4 py-3 flex items-center space-x-3 focus-within:bg-gray-200 hover:bg-gray-100" class:selected="{merchant.name==selected_merchant}">
 			                  <div class="flex-1 min-w-0">
-			                    <a class="focus:outline-none cursor-pointer" on:click="{()=>select_merchant(merchant.name)}">
+			                    <div class="focus:outline-none cursor-pointer" on:click="{()=>select_merchant(merchant.name)}">
 			                      <!-- Extend touch target to entire panel -->
 			                      <span class="absolute inset-0" aria-hidden="true"></span>
 														<div class="text-sm font-medium text-gray-900">
 															<div class="text-xs text-yellow-600">{merchant.name}</div>
 															<div class="">{#if merchant.info}{merchant.info.name}{/if}</div>
 														</div>
-			                    </a>
+			                    </div>
 			                  </div>
 			                </div>
 			              </li>

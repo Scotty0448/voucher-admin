@@ -55,21 +55,21 @@
     <div class="mt-2 mb-16 lg:mx-10 px-6 bg-gray-100 border border-gray-200">
       <div class="sm:pt-3 sm:mt-0 space-y-6 sm:space-y-3">
         <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start pt-5 sm:pt-2">
-          <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
+          <label for="qty_held" class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
             Qty Held
           </label>
-          <div class="mt-1 sm:mt-0 sm:col-span-1 pt-1.5">{balance}</div>
+          <div id="qty_held" class="mt-1 sm:mt-0 sm:col-span-1 pt-1.5">{balance}</div>
         </div>
       </div>
 
       <div class="mt-6 sm:mt-5 space-y-6 sm:space-y-3">
         <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2">
-          <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
+          <label for="address" class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
             Address
           </label>
           <div class="mt-1 sm:mt-0 sm:col-span-1">
             <div class="inline-flex w-full sm:w-80">
-              <input type="text" bind:value="{recipient_address}" class="block w-full sm:w-80 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+              <input id="address" type="text" bind:value="{recipient_address}" class="block w-full sm:w-80 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
               <svg class="h-8 w-8 mt-1 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" on:click={()=>{ state='scan' }}>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
               </svg>
@@ -80,17 +80,17 @@
 
       <div class="mt-6 sm:mt-5 space-y-6 sm:space-y-3">
         <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2">
-          <label class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
+          <label for="quty_to_send" class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2">
             Qty to Send
           </label>
           <div class="mt-1 sm:mt-0 sm:col-span-1">
-            <input type="text" bind:value="{qty_to_send}" class="block w-32 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
+            <input id="qty_to_send" type="text" bind:value="{qty_to_send}" class="block w-32 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md">
           </div>
         </div>
       </div>
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start pt-6 sm:pt-8">
-        <label></label>
+        <label for="none"></label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
           <button on:click={send} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
             <div hidden={!wait} class="pr-2"><Spinner color="white" /></div>

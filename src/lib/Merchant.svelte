@@ -62,13 +62,13 @@
     <div class="border-b border-gray-200">
       <div class="max-w-5xl px-4 sm:px-6 lg:px-8">
         <nav class="-mb-px flex space-x-8">
-          <a class="tab" on:click="{()=>active_tab='details'}"  class:active="{active_tab=='details'}">
+          <div class="tab" on:click="{()=>active_tab='details'}"  class:active="{active_tab=='details'}">
             Details
-          </a>
+          </div>
           {#if state != 'add'}
-            <a class="tab" on:click="{()=>active_tab='vouchers'}" class:active="{active_tab=='vouchers'}">
+            <div class="tab" on:click="{()=>active_tab='vouchers'}" class:active="{active_tab=='vouchers'}">
               Vouchers
-            </a>
+            </div>
           {/if}
         </nav>
       </div>

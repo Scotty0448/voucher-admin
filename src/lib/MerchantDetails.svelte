@@ -76,53 +76,53 @@
     <div class="mt-6 sm:mt-5 space-y-6 sm:space-y-3">
       {#if state == 'add'}
         <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2 sm:pb-3">
-          <label class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
+          <label for="asset_name" class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
             Asset Name
           </label>
           <div class="mt-1 sm:mt-0 sm:col-span-4">
-            <input type="text" bind:value="{asset.name}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+            <input id="asset_name" type="text" bind:value="{asset.name}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
           </div>
         </div>
       {/if}
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-2">
-        <label class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
+        <label for="merchant_name" class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
           Merchant Name
         </label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
-          <input type="text" bind:value="{asset.info.name}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+          <input id="merchant_name" type="text" bind:value="{asset.info.name}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
         </div>
       </div>
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-5">
-        <label class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
+        <label for="address" class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
           Address
         </label>
-        <div class="mt-1 sm:mt-0 sm:col-span-4">
+        <div if="address" class="mt-1 sm:mt-0 sm:col-span-4">
           <input type="text" bind:value="{asset.info.address1}" placeholder="Street" class="placeholder-gray-500 placeholder-opacity-50 max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
           <input type="text" bind:value="{asset.info.address2}" placeholder="City, State Zip" class="placeholder-gray-500 placeholder-opacity-50 max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md mt-2">
         </div>
       </div>
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-5">
-        <label class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
+        <label for="phone" class="block text-sm font-medium text-gray-800 sm:mt-px sm:pt-2">
           Phone
         </label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
-          <input type="text" bind:value="{asset.info.phone}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+          <input id="phone" type="text" bind:value="{asset.info.phone}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
         </div>
       </div>
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-center sm:pt-4">
-        <label class="block text-sm font-medium text-gray-800">
+        <label for="logo_ipfs_id" class="block text-sm font-medium text-gray-800">
           Logo IPFS ID
         </label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
           <div class="flex items-center">
-            <input type="text" bind:value="{asset.info.logo}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+            <input id="logo_ipfs_id" type="text" bind:value="{asset.info.logo}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
             {#if asset.info.logo}
               <span class="h-12 w-16 ml-6">
-                <img src="https://gateway.pinata.cloud/ipfs/{asset.info.logo}" >
+                <img src="https://gateway.pinata.cloud/ipfs/{asset.info.logo}" alt="">
               </span>
             {/if}
           </div>
@@ -130,7 +130,7 @@
       </div>
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-start sm:pt-5">
-        <label></label>
+        <label for="none"></label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
           {#if state == 'add'}
             <button on:click={addMerchant} disabled={wait} class="inline-flex justify-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none">
