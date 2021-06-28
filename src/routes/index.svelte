@@ -1,5 +1,5 @@
 <script>
-	import { md5 } from 'crypto-js/md5.js'
+	import md5 from 'crypto-js/md5.js'
 
 	import { authorized } from '$lib/local_stores.js'
 
@@ -13,7 +13,7 @@
 	let merchants = []
 
 	onMount(async () => {
-		let resp = await fetch(`/api/assets?prefix=VCH/`)
+		let resp = await fetch(`/api/assets.json?prefix=VCH/`)
 		asset_names = await resp.json()
 		asset_names = asset_names.filter(asset_name => asset_name != 'VCH/PR6')
 
@@ -24,7 +24,7 @@
 		}
 
 		for (let i=0; i<merchants.length; i++) {
-			let resp = await fetch(`/api/assets/${merchants[i].name.replace( /\//g, '|' )}?mempool=false`)
+			let resp = await fetch(`/api/assets/${merchants[i].name.replace( /\//g, '|' )}.json?mempool=false`)
       if (resp.status == 200) {
 				let asset = await resp.json()
 				if (asset.info) {
@@ -91,7 +91,7 @@
 						<div class="flex items-between">
 			        <div class="pl-4 pt-4 pb-4 w-full">
 			          <h2 on:click={login} class="text-xl font-medium text-gray-900">Merchants</h2>
-			          <form class="hidden mt-4 flex space-x-4" action="#">
+			          <form class="hidden2 mt-4 flex space-x-4" action="#">
 			            <div class="flex-1 min-w-0">
 			              <label for="search" class="sr-only">Search</label>
 			              <div class="relative rounded-md shadow-sm">

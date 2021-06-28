@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 const { COIN, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
+import sharp        from 'sharp'
 import fetch        from 'node-fetch'
 
 import * as rpc     from '$lib/rpc-client.js'
@@ -40,6 +41,12 @@ export async function put(req) {
   try {
     let asset = JSON.parse(req.body)
     console.log(`updating asset ${asset.name}`)
+
+    if (asset.info.logo) {
+      let img_data = asset.info.logo.split(',')[1]
+      let resized_data = await sharp(Buffer.from(img_data, 'base64')).resize({height:100}).toBuffer()
+      asset.info.logo = `data:image/png;base64,${resized_data.toString('base64')}`
+    }
 
     let org_asset = await rpc.getAssetDataWithMempool(asset.name, ASSET_ADDRESS)
 

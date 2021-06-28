@@ -2,17 +2,21 @@
   import { authorized } from '$lib/local_stores.js'
   import Spinner        from '$lib/Spinner.svelte'
 
-  export let voucher
+  export let vouchers
+  export let selected_voucher
+
+  let voucher
 
   let message = ''
   let error_message = ''
   let wait = false
 
-  $: initMessages(voucher)
+  $: init(selected_voucher)
 
-  function initMessages(voucher) {
+  function init(selected_voucher) {
     message = ''
     error_message = ''
+    voucher = vouchers[selected_voucher]
   }
 
   async function updateVoucher() {
@@ -24,11 +28,11 @@
       wait = true
       error_message = ''
       message = ''
-      let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}`, { method:'PUT', body:JSON.stringify(voucher) })
+      let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}.json`, { method:'PUT', body:JSON.stringify(voucher) })
       let result = await resp.json()
       if (resp.status == 200) {
-        message = 'Updated successfully'
         vouchers[selected_voucher] = voucher
+        message = 'Updated successfully'
       } else {
         error_message = result.message
         if (error_message == 'The quantity cannot be decreased') {

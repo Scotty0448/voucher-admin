@@ -7,15 +7,14 @@
 
   let vouchers = []
   let selected_voucher
-  let voucher
   let state = 'edit'
 
   async function loadVouchers(merchant) {
     vouchers = []
-    let resp = await fetch(`/api/assets?prefix=${merchant}/`)
+    let resp = await fetch(`/api/assets.json?prefix=${merchant}/`)
     let voucher_names = await resp.json()
     for (let i=0; i<voucher_names.length; i++) {
-      let resp = await fetch(`/api/assets/${voucher_names[i].replace( /\//g, '|' )}`)
+      let resp = await fetch(`/api/assets/${voucher_names[i].replace( /\//g, '|' )}.json`)
       if (resp.status == 200) {
         vouchers = [...vouchers, await resp.json()]
       } else {
@@ -23,20 +22,17 @@
       }
     }
     selected_voucher = undefined
-    voucher = undefined
   }
 
   $: loadVouchers(asset.name)
 
   async function select_voucher(idx) {
     selected_voucher = idx
-    voucher = vouchers[selected_voucher]
     state = 'edit'
   }
 
   async function addNewVoucher() {
     selected_voucher = -1
-    voucher = { name:asset.name+'/', amount:'', info:{title:''} }
     state = 'add'
   }
 </script>
@@ -73,12 +69,10 @@
                   {voucher.name}
                 </td>
                 <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {#if voucher.amount > 0}
-                    {voucher.amount}
-                  {/if}
+                  {voucher.amount || ''}
                 </td>
                 <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {voucher.balance}
+                  {voucher.balance || ''}
                 </td>
                 <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
                   {#if voucher.info}{voucher.info.title}{/if}
@@ -97,14 +91,14 @@
   </div>
 </div>
 
-{#if voucher}
+{#if selected_voucher}
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
       {#if state == 'add'}
-        <AddVoucher {voucher} />
+        <AddVoucher bind:vouchers={vouchers} {asset} />
       {:else}
-        <UpdateVoucher {voucher} />
-        <SendVoucher {voucher} />
+        <UpdateVoucher bind:vouchers={vouchers} {selected_voucher} />
+        <SendVoucher bind:vouchers={vouchers} {selected_voucher} />
       {/if}
     </div>
   </div>

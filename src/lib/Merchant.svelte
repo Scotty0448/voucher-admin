@@ -15,7 +15,7 @@
       state = 'add'
       active_tab = 'details'
     } else {
-      let resp = await fetch(`/api/assets/${name.replace( /\//g, '|' )}`)
+      let resp = await fetch(`/api/assets/${name.replace( /\//g, '|' )}.json`)
       if (resp.status == 200) {
         asset = await resp.json()
       } else {

@@ -2,18 +2,14 @@
   import { authorized } from '$lib/local_stores.js'
   import Spinner        from '$lib/Spinner.svelte'
 
-  export let voucher
+  export let vouchers
+  export let asset
+
+  let voucher = { name:asset.name+'/', amount:'', info:{title:''} }
 
   let message = ''
   let error_message = ''
   let wait = false
-
-  $: initMessages(voucher)
-
-  function initMessages(voucher) {
-    message = ''
-    error_message = ''
-  }
 
   async function addVoucher() {
     if (!$authorized) {
@@ -25,7 +21,7 @@
       wait = true
       error_message = ''
       message = ''
-      let resp = await fetch('/api/assets', { method:'POST', body:JSON.stringify(voucher) })
+      let resp = await fetch('/api/assets.json', { method:'POST', body:JSON.stringify(voucher) })
       let result = await resp.json()
       if (resp.status == 201) {
         vouchers = [...vouchers, voucher]

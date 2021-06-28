@@ -1,6 +1,5 @@
 <script>
   import { authorized } from '$lib/local_stores.js'
-
   import Spinner from '$lib/Spinner.svelte'
 
   export let merchants
@@ -11,11 +10,29 @@
   let error_message = ''
   let wait = false
 
+  let files
+
   $: init(asset.name)
 
   function init(name) {
     message = ''
     error_message = ''
+    files = undefined
+  }
+
+  async function getLogoDataURL() {
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          resolve(e.target.result)
+        }
+        reader.readAsDataURL(files[0])
+      } catch(err) {
+        console.log(err)
+        reject(err)
+      }
+    })
   }
 
   async function addMerchant() {
@@ -28,7 +45,10 @@
       wait = true
       error_message = ''
       message = ''
-      let resp = await fetch('/api/assets', { method:'POST', body:JSON.stringify(asset) })
+      if (files) {
+        asset.info.logo = await getLogoDataURL()
+      }
+      let resp = await fetch('/api/assets.json', { method:'POST', body:JSON.stringify(asset) })
       let result = await resp.json()
       if (resp.status == 201) {
         asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
@@ -52,7 +72,10 @@
       wait = true
       error_message = ''
       message = ''
-      let resp = await fetch(`/api/assets/${asset.name.replace( /\//g, '|' )}`, { method:'PUT', body:JSON.stringify(asset) })
+      if (files) {
+        asset.info.logo = await getLogoDataURL()
+      }
+      let resp = await fetch(`/api/assets/${asset.name.replace( /\//g, '|' )}.json`, { method:'PUT', body:JSON.stringify(asset) })
       let result = await resp.json()
       if (resp.status == 200) {
         for (let i=0; i<merchants.length; i++) {
@@ -115,14 +138,14 @@
 
       <div class="sm:grid sm:grid-cols-5 sm:gap-4 sm:items-center sm:pt-4">
         <label for="logo_ipfs_id" class="block text-sm font-medium text-gray-800">
-          Logo IPFS ID
+          Logo
         </label>
         <div class="mt-1 sm:mt-0 sm:col-span-4">
           <div class="flex items-center">
-            <input id="logo_ipfs_id" type="text" bind:value="{asset.info.logo}" class="max-w-lg block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+            <input id="logo_file" type="file" bind:files />
             {#if asset.info.logo}
               <span class="h-12 w-16 ml-6">
-                <img src="https://gateway.pinata.cloud/ipfs/{asset.info.logo}" alt="">
+                <img src="{asset.info.logo}" alt="">
               </span>
             {/if}
           </div>

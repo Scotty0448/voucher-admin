@@ -2,6 +2,8 @@ import dotenv from 'dotenv'
 dotenv.config()
 const { COIN, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
+import sharp        from 'sharp'
+
 import * as rpc     from '$lib/rpc-client.js'
 import * as pinata  from '$lib/pinata.js'
 import { coins }    from '$lib/coins.js'
@@ -20,6 +22,12 @@ export async function post(req) {
   try {
     let asset = JSON.parse(req.body)
     console.log(`creating asset ${asset.name}`)
+
+    if (asset.info.logo) {
+      let img_data = asset.info.logo.split(',')[1]
+      let resized_data = await sharp(Buffer.from(img_data, 'base64')).resize({height:100}).toBuffer()
+      asset.info.logo = `data:image/png;base64,${resized_data.toString('base64')}`
+    }
 
     let ipfs_hash = await pinata.pinJsonToIpfs(asset.info, asset.name)
 

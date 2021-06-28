@@ -26,6 +26,7 @@
 		"html5-qrcode": "^2.0.11",
 		"node-fetch": "^2.6.1",
 		"ravend-rpc": "github:Scotty0448/ravend-rpc",
+		"sharp": "^0.28.3",
 		"svelte-persistent-store": "^0.1.6"
 	}
 }

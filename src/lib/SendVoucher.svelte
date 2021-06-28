@@ -3,7 +3,10 @@
   import Spinner        from '$lib/Spinner.svelte'
   import Scanner        from '$lib/Scanner.svelte'
 
-  export let voucher
+  export let vouchers
+  export let selected_voucher
+
+  let voucher
 
   let message = ''
   let error_message = ''
@@ -14,12 +17,13 @@
   let recipient_address = ''
   let qty_to_send
 
-  $: initMessages(voucher)
+  $: init(selected_voucher)
   $: if (voucher) { balance = voucher.balance }
 
-  function initMessages(voucher) {
+  function init(selected_voucher) {
     message = ''
     error_message = ''
+    voucher = vouchers[selected_voucher]
   }
 
   async function send() {
@@ -31,7 +35,7 @@
       wait = true
       error_message = ''
       message = ''
-      let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}`, { method:'POST', body:JSON.stringify({address:recipient_address, qty:qty_to_send}) })
+      let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}.json`, { method:'POST', body:JSON.stringify({address:recipient_address, qty:qty_to_send}) })
       let result = await resp.json()
       if (resp.status == 200) {
         message = 'Sent ' + qty_to_send + ' to ' + recipient_address + '<br>' + '<a href="https://blockbook.ritocoin.org/tx/' + result.tx_id + '" class="underline" target="_blank">View transaction details</a>'
