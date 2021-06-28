@@ -91,7 +91,7 @@
 						<div class="flex items-between">
 			        <div class="pl-4 pt-4 pb-4 w-full">
 			          <h2 on:click={login} class="text-xl font-medium text-gray-900">Merchants</h2>
-			          <form class="hidden2 mt-4 flex space-x-4" action="#">
+			          <form class="hidden mt-4 flex space-x-4" action="#">
 			            <div class="flex-1 min-w-0">
 			              <label for="search" class="sr-only">Search</label>
 			              <div class="relative rounded-md shadow-sm">
