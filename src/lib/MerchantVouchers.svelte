@@ -91,7 +91,7 @@
   </div>
 </div>
 
-{#if selected_voucher}
+{#if selected_voucher != undefined}
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
       {#if state == 'add'}
