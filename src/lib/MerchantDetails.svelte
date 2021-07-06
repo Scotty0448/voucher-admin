@@ -17,15 +17,14 @@
   function init(name) {
     message = ''
     error_message = ''
-    files = undefined
   }
 
   async function getLogoDataURL() {
     return new Promise((resolve, reject) => {
       try {
         const reader = new FileReader()
-        reader.onload = (e) => {
-          resolve(e.target.result)
+        reader.onload = () => {
+          resolve(reader.result)
         }
         reader.readAsDataURL(files[0])
       } catch(err) {
@@ -45,12 +44,13 @@
       wait = true
       error_message = ''
       message = ''
-      if (files) {
+      if (files && files[0]) {
         asset.info.logo = await getLogoDataURL()
       }
       let resp = await fetch('/api/assets.json', { method:'POST', body:JSON.stringify(asset) })
       let result = await resp.json()
       if (resp.status == 201) {
+        document.getElementById('logo_file').value = ''
         asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
         message = 'Added successfully'
       } else {
@@ -82,6 +82,10 @@
           if (merchants[i].name == asset.name) {
             merchants[i].info = asset.info
           }
+        }
+        if (files) {
+          document.getElementById('logo_file').value = ''
+          files = ''
         }
         message = 'Updated successfully'
       } else {
