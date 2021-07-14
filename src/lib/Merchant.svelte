@@ -3,29 +3,21 @@
   import MerchantVouchers	from '$lib/MerchantVouchers.svelte'
 
   export let merchants
-  export let name
+  export let selected_merchant_idx
 
-  let asset
   let active_tab = 'details'
   let state
 
-  async function load(name) {
-    if (name == 'new') {
-      asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
+  async function load(selected_merchant_idx) {
+    if (selected_merchant_idx == -1) {
       state = 'add'
       active_tab = 'details'
     } else {
-      let resp = await fetch(`/api/assets/${name.replace( /\//g, '|' )}.json`)
-      if (resp.status == 200) {
-        asset = await resp.json()
-      } else {
-        asset = {name:'', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
-      }
       state = 'edit'
     }
   }
 
-  $: load(name)
+  $: load(selected_merchant_idx)
 </script>
 
 <style>
@@ -36,20 +28,20 @@
   .tab:not(active):hover { @apply border-gray-300 text-gray-900; }
 </style>
 
-{#if asset}
+{#if (selected_merchant_idx == -1) || merchants[selected_merchant_idx]}
   <div>
     <div class="max-w-5xl px-4 sm:px-6 lg:px-8">
       <div class="sm:flex sm:items-end sm:space-x-5">
         <div class="flex-1 min-w-0 flex items-center justify-end space-x-6 pb-1">
           <div class="mt-5 min-w-0 flex-1">
-            {#if name == 'new'}
+            {#if selected_merchant_idx == -1}
               <h1 class="text-xl font-bold text-gray-900 truncate">
                 New Merchant
               </h1>
             {:else}
-              <h3 class="text-yellow-600">{asset.name}</h3>
+              <h3 class="text-yellow-600">{merchants[selected_merchant_idx].name}</h3>
               <h1 class="text-xl font-semibold text-gray-900 truncate">
-                {asset.info.name} &nbsp;
+                {merchants[selected_merchant_idx].info.name} &nbsp;
               </h1>
             {/if}
           </div>
@@ -76,8 +68,8 @@
   </div>
 
   {#if active_tab == 'details'}
-    <MerchantDetails bind:merchants={merchants} bind:asset={asset} {state} />
+    <MerchantDetails {merchants} {selected_merchant_idx} {state} />
   {:else if active_tab == 'vouchers'}
-    <MerchantVouchers {asset} />
+    <MerchantVouchers {merchants} {selected_merchant_idx} />
   {/if}
 {/if}

@@ -31,7 +31,7 @@
       let resp = await fetch(`/api/assets/${voucher.name.replace( /\//g, '|' )}.json`, { method:'PUT', body:JSON.stringify(voucher) })
       let result = await resp.json()
       if (resp.status == 200) {
-        vouchers[selected_voucher] = voucher
+        // $vouchers[selected_voucher] = voucher
         message = 'Updated successfully'
       } else {
         error_message = result.message

@@ -1,20 +1,26 @@
 <script>
-  import { authorized } from '$lib/local_stores.js'
-  import Spinner from '$lib/Spinner.svelte'
+  import { authorized }   from '$lib/local_stores.js'
+  import Spinner          from '$lib/Spinner.svelte'
 
   export let merchants
-  export let asset
+  export let selected_merchant_idx
   export let state
 
+  let asset
   let message = ''
   let error_message = ''
   let wait = false
 
   let files
 
-  $: init(asset.name)
+  $: init(selected_merchant_idx)
 
-  function init(name) {
+  function init(selected_merchant_idx) {
+    if (selected_merchant_idx == -1) {
+      asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
+    } else {
+      asset = merchants[selected_merchant_idx]
+    }  
     message = ''
     error_message = ''
   }
@@ -78,11 +84,6 @@
       let resp = await fetch(`/api/assets/${asset.name.replace( /\//g, '|' )}.json`, { method:'PUT', body:JSON.stringify(asset) })
       let result = await resp.json()
       if (resp.status == 200) {
-        for (let i=0; i<merchants.length; i++) {
-          if (merchants[i].name == asset.name) {
-            merchants[i].info = asset.info
-          }
-        }
         if (files) {
           document.getElementById('logo_file').value = ''
           files = ''

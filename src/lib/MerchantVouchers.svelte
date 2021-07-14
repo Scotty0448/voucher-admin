@@ -1,30 +1,47 @@
 <script>
+  import { gun }        from '$lib/gun.js'
   import AddVoucher			from '$lib/AddVoucher.svelte'
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
   import SendVoucher		from '$lib/SendVoucher.svelte'
 
-  export let asset
+  export let merchants
+  export let selected_merchant_idx
 
   let vouchers = []
   let selected_voucher
   let state = 'edit'
 
-  async function loadVouchers(merchant) {
-    vouchers = []
-    let resp = await fetch(`/api/assets.json?prefix=${merchant}/`)
-    let voucher_names = await resp.json()
-    for (let i=0; i<voucher_names.length; i++) {
-      let resp = await fetch(`/api/assets/${voucher_names[i].replace( /\//g, '|' )}.json`)
-      if (resp.status == 200) {
-        vouchers = [...vouchers, await resp.json()]
-      } else {
-        vouchers = [...vouchers, { name:name, amount:0, info: {title:''} }]
-      }
+  function getGunNode(root, asset_name) {
+    let node = gun.get(root)
+    let name_parts = asset_name.split('/')
+    for (let j=0; j<name_parts.length; j++) {
+      node = node.get(name_parts[j])
     }
+    return node
+  }
+
+  async function loadVouchers(selected_merchant_idx) {
+    vouchers = []
+    let node = getGunNode('tokentrade-testnet', merchants[selected_merchant_idx].name)
+    node.map().on(function(voucher, voucher_key) {
+      node.get(voucher_key).get('data').on(function(data) {
+        delete data['_']
+        node.get(voucher_key).get('data').get('info').on(function(info) {
+          data.info = info
+          let voucher_name = `${merchants[selected_merchant_idx].name}/${voucher_key}`
+          let idx = vouchers.findIndex((voucher, idx) => voucher.name == voucher_name)
+          if (idx > -1) {
+            vouchers[idx] = data
+          } else {
+            vouchers = [...vouchers, data]
+          }
+        })
+      })
+    })
     selected_voucher = undefined
   }
 
-  $: loadVouchers(asset.name)
+  $: loadVouchers(selected_merchant_idx)
 
   async function select_voucher(idx) {
     selected_voucher = idx
@@ -95,10 +112,10 @@
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
       {#if state == 'add'}
-        <AddVoucher bind:vouchers={vouchers} {asset} />
+        <AddVoucher parent_name={merchants[selected_merchant_idx].name} />
       {:else}
-        <UpdateVoucher bind:vouchers={vouchers} {selected_voucher} />
-        <SendVoucher bind:vouchers={vouchers} {selected_voucher} />
+        <UpdateVoucher {vouchers} {selected_voucher} />
+        <SendVoucher {vouchers} {selected_voucher} />
       {/if}
     </div>
   </div>

@@ -2,10 +2,9 @@
   import { authorized } from '$lib/local_stores.js'
   import Spinner        from '$lib/Spinner.svelte'
 
-  export let vouchers
-  export let asset
+  export let parent_name
 
-  let voucher = { name:asset.name+'/', amount:'', info:{title:''} }
+  let voucher = { name:parent_name+'/', amount:'', info:{title:''} }
 
   let message = ''
   let error_message = ''
@@ -24,8 +23,7 @@
       let resp = await fetch('/api/assets.json', { method:'POST', body:JSON.stringify(voucher) })
       let result = await resp.json()
       if (resp.status == 201) {
-        vouchers = [...vouchers, voucher]
-        voucher = {name:asset.name+'/', amount:'', info:{title:''}}
+        voucher = {name:parent_name+'/', amount:'', info:{title:''}}
         message = 'Added successfully'
       } else {
         error_message = result.message
