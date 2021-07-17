@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 dotenv.config()
-const { COIN, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
+const { COIN, ROOT_ASSET, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
 import sharp        from 'sharp'
 import fetch        from 'node-fetch'
@@ -12,24 +12,28 @@ import { coins }    from '$lib/coins.js'
 export async function get(req) {
   try {
     let name = req.params.slug.replace( /\|/g, '/' )
-    let asset
-    if (req.query.get('mempool') == 'false') {
-      asset = await rpc.getAssetData(name)
+    if (name == 'root') {
+      return { status:200, body:{ root:ROOT_ASSET } }
     } else {
-      asset = await rpc.getAssetDataWithMempool(name, ASSET_ADDRESS)
-    }
-    if (asset) {
-      let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
-      asset.balance = asset_balances[name] || 0
-      if (asset.ipfs_hash) {
-        let resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
-        if (resp.status == 200) {
-          asset.info = await resp.json()
-        }
+      let asset
+      if (req.query.get('mempool') == 'false') {
+        asset = await rpc.getAssetData(name)
+      } else {
+        asset = await rpc.getAssetDataWithMempool(name, ASSET_ADDRESS)
       }
-      return { status:200, body:asset }
-    } else {
-      return { status:404, body:{ message:'Asset not found' } }
+      if (asset) {
+        let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
+        asset.balance = asset_balances[name] || 0
+        if (asset.ipfs_hash) {
+          let resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
+          if (resp.status == 200) {
+            asset.info = await resp.json()
+          }
+        }
+        return { status:200, body:asset }
+      } else {
+        return { status:404, body:{ message:'Asset not found' } }
+      }
     }
   } catch(err) {
     console.log(err.message)

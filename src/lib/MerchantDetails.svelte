@@ -1,6 +1,6 @@
 <script>
-  import { authorized }   from '$lib/local_stores.js'
-  import Spinner          from '$lib/Spinner.svelte'
+  import { authorized, root_asset }   from '$lib/local_stores.js'
+  import Spinner                      from '$lib/Spinner.svelte'
 
   export let merchants
   export let selected_merchant_idx
@@ -17,10 +17,10 @@
 
   function init(selected_merchant_idx) {
     if (selected_merchant_idx == -1) {
-      asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
+      asset = {name:`${$root_asset}/`, info:{name:'', address1:'', address2:'', phone:'', logo:''}}
     } else {
       asset = merchants[selected_merchant_idx]
-    }  
+    }
     message = ''
     error_message = ''
   }
@@ -57,7 +57,7 @@
       let result = await resp.json()
       if (resp.status == 201) {
         document.getElementById('logo_file').value = ''
-        asset = {name:'VCH/', info:{name:'', address1:'', address2:'', phone:'', logo:''}}
+        asset = {name:`${$root_asset}/`, info:{name:'', address1:'', address2:'', phone:'', logo:''}}
         message = 'Added successfully'
       } else {
         error_message = result.message

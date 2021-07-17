@@ -2,7 +2,7 @@
 	import md5 from 'crypto-js/md5.js'
 
 	import { gun }        from '$lib/gun.js'
-	import { authorized } from '$lib/local_stores.js'
+	import { authorized, root_asset } from '$lib/local_stores.js'
 
 	import Merchant				from '$lib/Merchant.svelte'
 
@@ -15,12 +15,13 @@
 
 	onMount(async () => {
 		merchants = []
-		let prefix = "VCH"
-    let root = gun.get('tokentrade-testnet').get(prefix)
+		let resp = await fetch(`/api/assets/root.json`)
+    $root_asset = (await resp.json()).root
+    let root = gun.get('tokentrade-testnet').get($root_asset)
     root.map().on(function(merchant, key) {
       root.get(key).get('data').get('info').on(function(info) {
         delete info['_']
-        let name = `${prefix}/${key}`
+        let name = `${$root_asset}/${key}`
         let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
         if (idx > -1) {
           merchants[idx] = {name:name, info:info}
