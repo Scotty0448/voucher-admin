@@ -1,6 +1,7 @@
 <script>
-  import { authorized, root_asset }   from '$lib/local_stores.js'
-  import Spinner                      from '$lib/Spinner.svelte'
+  import { authorized }   from '$lib/local_stores.js'
+  import { root_asset }   from '$lib/stores.js'
+  import Spinner          from '$lib/Spinner.svelte'
 
   export let merchants
   export let selected_merchant_idx

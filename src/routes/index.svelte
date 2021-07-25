@@ -1,8 +1,9 @@
 <script>
 	import md5 from 'crypto-js/md5.js'
 
-	import { gun }        from '$lib/gun.js'
-	import { authorized, root_asset } from '$lib/local_stores.js'
+	import { gun_host, gun }  from '$lib/gun.js'
+	import { authorized } 		from '$lib/local_stores.js'
+	import { gun_user, gun_user_chain, root_asset, asset_address, block_count }  from '$lib/stores.js'
 
 	import Merchant				from '$lib/Merchant.svelte'
 
@@ -14,23 +15,35 @@
 	let window_width
 
 	onMount(async () => {
+		let resp = await fetch(`/api/assets/user_pub.json`)
+		let pub = (await resp.json()).user_pub
+		$gun_user = gun.user(pub)
+		$gun_user_chain = $gun_user.get('rito-testnet')
+		$gun_user_chain.get('block_count').on(async (count) => {
+			$block_count = count
+		})
 		merchants = []
-		let resp = await fetch(`/api/assets/root.json`)
-    $root_asset = (await resp.json()).root
-    let root = gun.get('tokentrade-testnet').get($root_asset)
-    root.map().on(function(merchant, key) {
-      root.get(key).get('data').get('info').on(function(info) {
-        delete info['_']
-        let name = `${$root_asset}/${key}`
-        let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
-        if (idx > -1) {
-          merchants[idx] = {name:name, info:info}
-        } else {
-          merchants = [...merchants, {name:name, info:info}]
-        }
-      })
-    })
-		merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+		resp = await fetch(`/api/assets/root.json`)
+		$root_asset = (await resp.json()).root
+		resp = await fetch(`/api/assets/asset_address.json`)
+		$asset_address = (await resp.json()).asset_address
+		let assets = $gun_user_chain.get('assets')
+		assets.map().on((asset, name) => {
+			if (name.startsWith(`${$root_asset}/`)) {
+				if (name.split('/').length==2) {
+					assets.get(name).get('data').get('info').on(info => {
+		        delete info['_']
+		        let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
+		        if (idx > -1) {
+		          merchants[idx] = {name:name, info:info}
+		        } else {
+		          merchants = [...merchants, {name:name, info:info}]
+							merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+		        }
+		      })
+				}
+			}
+		})
 	})
 
 	async function select_merchant(idx) {
@@ -66,6 +79,8 @@
 	    <div class="flex-1 relative z-0 flex overflow-hidden">
 				{#if window_width >= 768 || state=='detail'}
 		      <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none md:order-last" tabindex="0">
+						<div class="float-right text-xs text-gray-400 pt-1 pr-1.5">Last block: {$block_count}</div>
+
 		        <!-- Breadcrumb -->
 		        <nav class="flex items-start px-4 pt-4 sm:px-6 lg:px-8 md:hidden" aria-label="Breadcrumb">
 		          <div on:click="{()=>state='list'}" class="inline-flex items-center space-x-1 text-sm font-medium text-gray-900">
@@ -113,8 +128,8 @@
 							</div>
 						</div>
 
-		        <nav class="flex-1 min-h-0 overflow-y-auto" aria-label="Directory">
-		          <div class="border-t border-gray-200">
+		        <nav class="flex-1 min-h-0 overflow-y-auto border-t border-gray-200" aria-label="Directory">
+		          <div class="border-b border-gray-200">
 		            <ul class="relative z-0 divide-y divide-gray-200">
 
 									{#each merchants as merchant, idx}

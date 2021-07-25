@@ -1,5 +1,6 @@
 <script>
-  import { gun }        from '$lib/gun.js'
+  import { gun_user_chain, asset_address, block_count }   	from '$lib/stores.js'
+
   import AddVoucher			from '$lib/AddVoucher.svelte'
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
   import SendVoucher		from '$lib/SendVoucher.svelte'
@@ -11,37 +12,54 @@
   let selected_voucher
   let state = 'edit'
 
-  function getGunNode(root, asset_name) {
-    let node = gun.get(root)
-    let name_parts = asset_name.split('/')
-    for (let j=0; j<name_parts.length; j++) {
-      node = node.get(name_parts[j])
+  function getNodeByPath(chain, path) {
+    let node = chain
+    let path_parts = path.split('/')
+    for (let j=0; j<path_parts.length; j++) {
+      node = node.get(path_parts[j])
     }
     return node
   }
 
   async function loadVouchers(selected_merchant_idx) {
     vouchers = []
-    let node = getGunNode('tokentrade-testnet', merchants[selected_merchant_idx].name)
-    node.map().on(function(voucher, voucher_key) {
-      node.get(voucher_key).get('data').on(function(data) {
-        delete data['_']
-        node.get(voucher_key).get('data').get('info').on(function(info) {
-          data.info = info
-          let voucher_name = `${merchants[selected_merchant_idx].name}/${voucher_key}`
-          let idx = vouchers.findIndex((voucher, idx) => voucher.name == voucher_name)
-          if (idx > -1) {
-            vouchers[idx] = data
-          } else {
-            vouchers = [...vouchers, data]
-          }
-        })
-      })
+    let assets = $gun_user_chain.get('assets')
+    assets.map().once((asset, name) => {
+			if (name.startsWith(`${merchants[selected_merchant_idx].name}/`)) {
+				assets.get(name).get('data').once(data => {
+	        delete data['_']
+          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').once(balance_data => {
+            if (balance_data) {
+              data.balance = balance_data ? balance_data.confirmed : undefined
+            }
+            assets.get(name).get('data').get('info').once(info => {
+              delete info['_']
+              data.info = info
+              let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+              if (idx > -1) {
+                vouchers[idx] = data
+              } else {
+                vouchers = [...vouchers, data]
+                vouchers.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+              }
+            })
+          })
+	      })
+			}
     })
     selected_voucher = undefined
   }
 
+  async function updateBalances(selected_merchant_idx, block_count) {
+    for (let i=0; i<vouchers.length; i++) {
+      $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(vouchers[i].name).get('data').once(balance_data => {
+        vouchers[i].balance = balance_data ? balance_data.confirmed : undefined
+      })
+    }
+  }
+
   $: loadVouchers(selected_merchant_idx)
+  $: updateBalances($block_count)
 
   async function select_voucher(idx) {
     selected_voucher = idx

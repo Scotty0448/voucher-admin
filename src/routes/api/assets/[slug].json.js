@@ -2,6 +2,8 @@ import dotenv from 'dotenv'
 dotenv.config()
 const { COIN, ROOT_ASSET, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
+import { gun_host, gun }  from '$lib/gun.js'
+
 import sharp        from 'sharp'
 import fetch        from 'node-fetch'
 
@@ -11,9 +13,19 @@ import { coins }    from '$lib/coins.js'
 
 export async function get(req) {
   try {
+    let resp
     let name = req.params.slug.replace( /\|/g, '/' )
-    if (name == 'root') {
+    if (name == 'user_pub') {
+      resp = await fetch(`${gun_host}/info`)
+      let info = await resp.json()
+      return { status:200, body:{ user_pub:info.user_pubs.chaindata }}
+    } else if (name == 'root') {
       return { status:200, body:{ root:ROOT_ASSET } }
+    } else if (name == 'asset_address') {
+      return { status:200, body:{ asset_address:ASSET_ADDRESS } }
+    } else if (name == 'balances') {
+      let balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
+      return { status:200, body:{ balances:balances } }
     } else {
       let asset
       if (req.query.get('mempool') == 'false') {
@@ -25,7 +37,7 @@ export async function get(req) {
         let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
         asset.balance = asset_balances[name] || 0
         if (asset.ipfs_hash) {
-          let resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
+          resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
           if (resp.status == 200) {
             asset.info = await resp.json()
           }
