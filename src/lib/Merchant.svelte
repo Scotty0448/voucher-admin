@@ -41,7 +41,9 @@
             {:else}
               <h3 class="text-yellow-600">{merchants[selected_merchant_idx].name}</h3>
               <h1 class="text-xl font-semibold text-gray-900 truncate">
-                {merchants[selected_merchant_idx].info.name} &nbsp;
+                {#if merchants[selected_merchant_idx].info}
+                  {merchants[selected_merchant_idx].info.name} &nbsp;
+                {/if}
               </h1>
             {/if}
           </div>

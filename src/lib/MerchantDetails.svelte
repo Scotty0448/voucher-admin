@@ -17,10 +17,12 @@
   $: init(selected_merchant_idx)
 
   function init(selected_merchant_idx) {
-    if (selected_merchant_idx == -1) {
-      asset = {name:`${$root_asset}/`, info:{name:'', address1:'', address2:'', phone:'', logo:''}}
-    } else {
+    asset = { name:`${$root_asset}/`, info:{} }
+    if (selected_merchant_idx != -1) {
       asset = merchants[selected_merchant_idx]
+      if (!asset.info) {
+        asset.info = {}
+      }
     }
     message = ''
     error_message = ''

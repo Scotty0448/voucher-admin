@@ -21,7 +21,7 @@
     return node
   }
 
-  async function loadVouchers(selected_merchant_idx) {
+  async function loadVouchers_org(selected_merchant_idx) {
     vouchers = []
     let assets = $gun_user_chain.get('assets')
     assets.map().once((asset, name) => {
@@ -50,16 +50,50 @@
     selected_voucher = undefined
   }
 
-  async function updateBalances(selected_merchant_idx, block_count) {
-    for (let i=0; i<vouchers.length; i++) {
-      $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(vouchers[i].name).get('data').once(balance_data => {
-        vouchers[i].balance = balance_data ? balance_data.confirmed : undefined
-      })
-    }
+  async function loadVouchers(selected_merchant_idx) {
+    vouchers = []
+    $gun_user_chain.get('assets').map().on((asset, name) => {
+			if (name.startsWith(`${merchants[selected_merchant_idx].name}/`)) {
+        let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+        if (idx == -1) {
+          vouchers = [...vouchers, { name:name }]
+          vouchers.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+
+          $gun_user_chain.get('assets').get(name).get('data').off()
+          $gun_user_chain.get('assets').get(name).get('data').on(data => {
+            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+            if (idx > -1) {
+              delete data['_']
+              data.info = vouchers[idx].info
+              vouchers[idx] = data
+            }
+          })
+
+          $gun_user_chain.get('assets').get(name).get('data').get('info').off()
+          $gun_user_chain.get('assets').get(name).get('data').get('info').on(info => {
+            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+            if (idx > -1) {
+              delete info['_']
+              vouchers[idx].info = info
+            }
+          })
+
+          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').off()
+          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').on(balance_data => {
+            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+            if (idx > -1) {
+              vouchers[idx].balance = balance_data ? balance_data.confirmed : undefined
+            }
+          })
+
+        }
+      }
+    })
+
+    selected_voucher = undefined
   }
 
   $: loadVouchers(selected_merchant_idx)
-  $: updateBalances($block_count)
 
   async function select_voucher(idx) {
     selected_voucher = idx

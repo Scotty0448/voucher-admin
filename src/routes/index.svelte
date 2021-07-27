@@ -31,16 +31,19 @@
 		assets.map().on((asset, name) => {
 			if (name.startsWith(`${$root_asset}/`)) {
 				if (name.split('/').length==2) {
-					assets.get(name).get('data').get('info').on(info => {
-		        delete info['_']
-		        let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
-		        if (idx > -1) {
-		          merchants[idx] = {name:name, info:info}
-		        } else {
-		          merchants = [...merchants, {name:name, info:info}]
-							merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-		        }
-		      })
+					let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
+					if (idx == -1) {
+						merchants = [...merchants, { name:name }]
+						merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+						assets.get(name).get('data').get('info').off()
+						assets.get(name).get('data').get('info').on(info => {
+							let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
+	            if (idx > -1) {
+	              delete info['_']
+	              merchants[idx].info = info
+	            }
+						})
+					}
 				}
 			}
 		})
