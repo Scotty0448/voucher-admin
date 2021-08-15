@@ -1,5 +1,6 @@
 <script>
-  import { gun_user_chain, asset_address, block_count }   	from '$lib/stores.js'
+  import { gun }  			from '$lib/gun.js'
+  import { gun_user_chain, asset_address, block_count } from '$lib/stores.js'
 
   import AddVoucher			from '$lib/AddVoucher.svelte'
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
@@ -21,72 +22,33 @@
     return node
   }
 
-  async function loadVouchers_org(selected_merchant_idx) {
-    vouchers = []
-    let assets = $gun_user_chain.get('assets')
-    assets.map().once((asset, name) => {
-			if (name.startsWith(`${merchants[selected_merchant_idx].name}/`)) {
-				assets.get(name).get('data').once(data => {
-	        delete data['_']
-          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').once(balance_data => {
-            if (balance_data) {
-              data.balance = balance_data ? balance_data.confirmed : undefined
-            }
-            assets.get(name).get('data').get('info').once(info => {
-              delete info['_']
-              data.info = info
-              let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
-              if (idx > -1) {
-                vouchers[idx] = data
-              } else {
-                vouchers = [...vouchers, data]
-                vouchers.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-              }
-            })
-          })
-	      })
-			}
-    })
-    selected_voucher = undefined
+  function isVoucherOf(name, merchant_name) {
+    return name.startsWith(`${merchant_name}/`) && name.split('/').length==3
   }
 
   async function loadVouchers(selected_merchant_idx) {
     vouchers = []
     $gun_user_chain.get('assets').map().on((asset, name) => {
-			if (name.startsWith(`${merchants[selected_merchant_idx].name}/`)) {
-        let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
+			if (isVoucherOf(name, merchants[selected_merchant_idx].name)) {
+        delete asset['_']
+        let idx = vouchers.findIndex(voucher => voucher.name == name)
         if (idx == -1) {
-          vouchers = [...vouchers, { name:name }]
+          vouchers = [...vouchers, asset]
           vouchers.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-
-          $gun_user_chain.get('assets').get(name).get('data').off()
-          $gun_user_chain.get('assets').get(name).get('data').on(data => {
-            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
-            if (idx > -1) {
-              delete data['_']
-              data.info = vouchers[idx].info
-              vouchers[idx] = data
-            }
-          })
-
-          $gun_user_chain.get('assets').get(name).get('data').get('info').off()
-          $gun_user_chain.get('assets').get(name).get('data').get('info').on(info => {
-            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
-            if (idx > -1) {
+          idx = vouchers.findIndex(voucher => voucher.name == name)
+        }
+        if (asset.info) {
+          $gun_user_chain.get('assets').get(name).get('info').on(info => {
+            if (info) {
               delete info['_']
               vouchers[idx].info = info
             }
           })
-
-          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').off()
-          $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).get('data').on(balance_data => {
-            let idx = vouchers.findIndex((voucher, idx) => voucher.name == name)
-            if (idx > -1) {
-              vouchers[idx].balance = balance_data ? balance_data.confirmed : undefined
-            }
-          })
-
         }
+        $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).on(balance_data => {
+          delete balance_data['_']
+          vouchers[idx].balance = balance_data ? balance_data.confirmed : undefined
+        })
       }
     })
 

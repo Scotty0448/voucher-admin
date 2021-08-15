@@ -1,8 +1,8 @@
 <script>
 	import md5 from 'crypto-js/md5.js'
 
-	import { gun_host, gun }  from '$lib/gun.js'
-	import { authorized } 		from '$lib/local_stores.js'
+	import { authorized } 	from '$lib/local_stores.js'
+	import { gun }  				from '$lib/gun.js'
 	import { gun_user, gun_user_chain, root_asset, asset_address, block_count }  from '$lib/stores.js'
 
 	import Merchant				from '$lib/Merchant.svelte'
@@ -14,12 +14,16 @@
 	let state = 'list'
 	let window_width
 
+	function isMerchant(name) {
+		return (name.startsWith(`${$root_asset}/`) && name.split('/').length==2)
+	}
+
 	onMount(async () => {
 		let resp = await fetch(`/api/assets/user_pub.json`)
 		let pub = (await resp.json()).user_pub
 		$gun_user = gun.user(pub)
 		$gun_user_chain = $gun_user.get('rito-testnet')
-		$gun_user_chain.get('block_count').on(async (count) => {
+		$gun_user_chain.get('block_count').on(count => {
 			$block_count = count
 		})
 		merchants = []
@@ -27,23 +31,23 @@
 		$root_asset = (await resp.json()).root
 		resp = await fetch(`/api/assets/asset_address.json`)
 		$asset_address = (await resp.json()).asset_address
-		let assets = $gun_user_chain.get('assets')
-		assets.map().on((asset, name) => {
-			if (name.startsWith(`${$root_asset}/`)) {
-				if (name.split('/').length==2) {
-					let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
-					if (idx == -1) {
-						merchants = [...merchants, { name:name }]
-						merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-						assets.get(name).get('data').get('info').off()
-						assets.get(name).get('data').get('info').on(info => {
-							let idx = merchants.findIndex((merchant, idx) => merchant.name == name)
-	            if (idx > -1) {
-	              delete info['_']
-	              merchants[idx].info = info
-	            }
-						})
-					}
+
+		$gun_user_chain.get('assets').map().on((asset, name) => {
+			if (isMerchant(name)) {
+				delete asset['_']
+				let idx = merchants.findIndex(merchant => merchant.name == name)
+				if (idx == -1) {
+					merchants = [...merchants, asset]
+					merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+					idx = merchants.findIndex(merchant => merchant.name == name)
+				}
+				if (asset.info) {
+					$gun_user_chain.get('assets').get(name).get('info').on(info => {
+						if (info) {
+	            delete info['_']
+							merchants[idx].info = info
+						}
+					})
 				}
 			}
 		})
@@ -61,7 +65,7 @@
 
 	function merchant_name(merchant) {
 		try {
-			return merchant.info.name
+			return merchant.info.name || ''
 		} catch(err) {
 			return ''
 		}
