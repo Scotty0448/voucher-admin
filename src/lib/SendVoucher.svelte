@@ -1,9 +1,9 @@
 <script>
-  import { authorized } from '$lib/local_stores.js'
-  import Spinner        from '$lib/Spinner.svelte'
-  import Scanner        from '$lib/Scanner.svelte'
+  import { authorized }       from '$lib/local_stores.js'
+  import { assets, balances } from '$lib/stores.js'
+  import Spinner              from '$lib/Spinner.svelte'
+  import Scanner              from '$lib/Scanner.svelte'
 
-  export let vouchers
   export let selected_voucher
 
   let voucher
@@ -18,12 +18,12 @@
   let qty_to_send
 
   $: init(selected_voucher)
-  $: if (voucher) { balance = voucher.balance }
+  $: if (voucher) { balance = $balances[voucher.name].confirmed }
 
   function init(selected_voucher) {
     message = ''
     error_message = ''
-    voucher = vouchers[selected_voucher]
+    voucher = $assets[selected_voucher]
   }
 
   async function send() {

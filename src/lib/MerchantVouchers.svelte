@@ -1,15 +1,12 @@
 <script>
-  import { gun }  			from '$lib/gun.js'
-  import { gun_user_chain, asset_address, block_count } from '$lib/stores.js'
+  import { assets, balances } from '$lib/stores.js'
 
   import AddVoucher			from '$lib/AddVoucher.svelte'
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
   import SendVoucher		from '$lib/SendVoucher.svelte'
 
-  export let merchants
   export let selected_merchant_idx
 
-  let vouchers = []
   let selected_voucher
   let state = 'edit'
 
@@ -23,39 +20,14 @@
   }
 
   function isVoucherOf(name, merchant_name) {
-    return name.startsWith(`${merchant_name}/`) && name.split('/').length==3
+    return (name.startsWith(`${merchant_name}/`) && name.split('/').length==3)
   }
 
-  async function loadVouchers(selected_merchant_idx) {
-    vouchers = []
-    $gun_user_chain.get('assets').map().on((asset, name) => {
-			if (isVoucherOf(name, merchants[selected_merchant_idx].name)) {
-        delete asset['_']
-        let idx = vouchers.findIndex(voucher => voucher.name == name)
-        if (idx == -1) {
-          vouchers = [...vouchers, asset]
-          vouchers.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-          idx = vouchers.findIndex(voucher => voucher.name == name)
-        }
-        if (asset.info) {
-          $gun_user_chain.get('assets').get(name).get('info').on(info => {
-            if (info) {
-              delete info['_']
-              vouchers[idx].info = info
-            }
-          })
-        }
-        $gun_user_chain.get('addresses').get($asset_address).get('asset_balances').get(name).on(balance_data => {
-          delete balance_data['_']
-          vouchers[idx].balance = balance_data ? balance_data.confirmed : undefined
-        })
-      }
-    })
-
+  async function init() {
     selected_voucher = undefined
   }
 
-  $: loadVouchers(selected_merchant_idx)
+  $: if (selected_merchant_idx) init()
 
   async function select_voucher(idx) {
     selected_voucher = idx
@@ -94,21 +66,27 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            {#each vouchers as voucher, idx}
-              <tr on:click="{()=>select_voucher(idx)}" class="voucher hover:bg-gray-100 hover:text-gray-800 cursor-pointer text-sm text-gray-600" class:selected="{idx==selected_voucher}">
-                <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {voucher.name}
-                </td>
-                <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {voucher.amount || ''}
-                </td>
-                <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {voucher.balance || ''}
-                </td>
-                <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                  {#if voucher.info}{voucher.info.title}{/if}
-                </td>
-              </tr>
+            {#each $assets as asset, idx}
+              {#if (isVoucherOf(asset.name, $assets[selected_merchant_idx].name))}
+                <tr on:click="{()=>select_voucher(idx)}" class="voucher hover:bg-gray-100 hover:text-gray-800 cursor-pointer text-sm text-gray-600" class:selected="{idx==selected_voucher}">
+                  <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
+                    {asset.name}
+                  </td>
+                  <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
+                    {asset.amount || ''}
+                  </td>
+                  <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
+                    {#if $balances[asset.name] != undefined}
+                      {$balances[asset.name].confirmed}
+                    {/if}
+                  </td>
+                  <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
+                    {#if asset.info != undefined}
+                      {asset.info.title}
+                    {/if}
+                  </td>
+                </tr>
+              {/if}
             {/each}
           </tbody>
         </table>
@@ -126,10 +104,10 @@
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
       {#if state == 'add'}
-        <AddVoucher parent_name={merchants[selected_merchant_idx].name} />
+        <AddVoucher parent_name={$assets[selected_merchant_idx].name} />
       {:else}
-        <UpdateVoucher {vouchers} {selected_voucher} />
-        <SendVoucher {vouchers} {selected_voucher} />
+        <UpdateVoucher {selected_voucher} />
+        <SendVoucher {selected_voucher} />
       {/if}
     </div>
   </div>

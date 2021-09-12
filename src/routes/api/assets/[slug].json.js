@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 const { COIN, ROOT_ASSET, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
-import { gun_host, gun }  from '$lib/gun.js'
+import { gun_relay, gun }  from '$lib/gun.js'
 
 import sharp        from 'sharp'
 import fetch        from 'node-fetch'
@@ -16,11 +16,11 @@ export async function get(req) {
     let resp
     let name = req.params.slug.replace( /\|/g, '/' )
     if (name == 'user_pub') {
-      resp = await fetch(`${gun_host}/info`)
+      resp = await fetch(`${gun_relay}/info`)
       let info = await resp.json()
       return { status:200, body:{ user_pub:info.user_pubs.chaindata }}
-    } else if (name == 'root') {
-      return { status:200, body:{ root:ROOT_ASSET } }
+    } else if (name == 'root_asset') {
+      return { status:200, body:{ root_asset:ROOT_ASSET } }
     } else if (name == 'asset_address') {
       return { status:200, body:{ asset_address:ASSET_ADDRESS } }
     } else if (name == 'balances') {

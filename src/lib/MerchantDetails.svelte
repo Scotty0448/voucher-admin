@@ -1,9 +1,8 @@
 <script>
-  import { authorized }   from '$lib/local_stores.js'
-  import { root_asset }   from '$lib/stores.js'
-  import Spinner          from '$lib/Spinner.svelte'
+  import { authorized }         from '$lib/local_stores.js'
+  import { root_asset, assets } from '$lib/stores.js'
+  import Spinner                from '$lib/Spinner.svelte'
 
-  export let merchants
   export let selected_merchant_idx
   export let state
 
@@ -19,7 +18,7 @@
   function init(selected_merchant_idx) {
     asset = { name:`${$root_asset}/`, info:{} }
     if (selected_merchant_idx != -1) {
-      asset = merchants[selected_merchant_idx]
+      asset = $assets[selected_merchant_idx]
       if (!asset.info) {
         asset.info = {}
       }

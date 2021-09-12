@@ -1,71 +1,78 @@
 <script>
 	import md5 from 'crypto-js/md5.js'
 
-	import { authorized } 	from '$lib/local_stores.js'
-	import { gun }  				from '$lib/gun.js'
-	import { gun_user, gun_user_chain, root_asset, asset_address, block_count }  from '$lib/stores.js'
+	import { authorized } from '$lib/local_stores.js'
+	import { gun }  			from '$lib/gun.js'
+	import { block_count, root_asset, assets, balances }  from '$lib/stores.js'
+	import { onMount }  	from 'svelte'
 
 	import Merchant				from '$lib/Merchant.svelte'
 
-	import { onMount }  	from 'svelte'
-
-	let merchants = []
 	let selected_merchant_idx
 	let state = 'list'
 	let window_width
+	let sortAssetsTimeout
 
-	function isMerchant(name) {
-		return (name.startsWith(`${$root_asset}/`) && name.split('/').length==2)
+	function sortAssetsAfterDelay(duration) {
+		if (sortAssetsTimeout) clearTimeout(sortAssetsTimeout)
+		sortAssetsTimeout = setTimeout(() => {
+			$assets = $assets.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+		}, duration)
 	}
 
 	onMount(async () => {
 		let resp = await fetch(`/api/assets/user_pub.json`)
 		let pub = (await resp.json()).user_pub
-		$gun_user = gun.user(pub)
-		$gun_user_chain = $gun_user.get('rito-testnet')
-		$gun_user_chain.get('block_count').on(count => {
+		let gun_user = gun.user(pub)
+		let chain = gun_user.get('rito-testnet')
+		chain.get('block_count').on(count => {
 			$block_count = count
 		})
-		merchants = []
-		resp = await fetch(`/api/assets/root.json`)
-		$root_asset = (await resp.json()).root
-		resp = await fetch(`/api/assets/asset_address.json`)
-		$asset_address = (await resp.json()).asset_address
 
-		$gun_user_chain.get('assets').map().on((asset, name) => {
-			if (isMerchant(name)) {
-				delete asset['_']
-				let idx = merchants.findIndex(merchant => merchant.name == name)
-				if (idx == -1) {
-					merchants = [...merchants, asset]
-					merchants.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-					idx = merchants.findIndex(merchant => merchant.name == name)
+		resp = await fetch(`/api/assets/root_asset.json`)
+		$root_asset = (await resp.json()).root_asset
+		resp = await fetch(`/api/assets/asset_address.json`)
+		let asset_address = (await resp.json()).asset_address
+
+		chain.get('assets').map().on((asset, name) => {
+		  if (name.startsWith(`${$root_asset}/`)) {
+		    delete asset['_']
+				try { asset.info = JSON.parse(asset.info) } catch(err) {}
+		    let idx = $assets.findIndex(asset => asset.name == name)
+		    if (idx == -1) {
+		      $assets = [...$assets, asset]
+					sortAssetsAfterDelay(50)
+		    } else {
+					$assets[idx] = asset
 				}
-				if (asset.info) {
-					$gun_user_chain.get('assets').get(name).get('info').on(info => {
-						if (info) {
-	            delete info['_']
-							merchants[idx].info = info
-						}
-					})
-				}
-			}
+		  }
+		})
+
+		chain.get('addresses').get(asset_address).get('asset_balances').map().on((asset_balances, name) => {
+			if (name.startsWith(`${$root_asset}/`)) {
+		    delete asset_balances['_']
+				$balances[name] = asset_balances
+		  }
 		})
 	})
-
-	async function select_merchant(idx) {
-		selected_merchant_idx = idx
-		state = 'detail'
-	}
 
 	async function login() {
 		let password = prompt("Enter your password:")
 		$authorized = (md5(password) == 'fb1c9e05e53928d05f77f4eab0dc587c')
 	}
 
-	function merchant_name(merchant) {
+	async function select_merchant(idx) {
+		selected_merchant_idx = idx
+		state = 'detail'
+	}
+
+	function isMerchant(name) {
+		return (name.startsWith(`${$root_asset}/`) && name.split('/').length==2)
+	}
+
+	function merchant_name(asset) {
 		try {
-			return merchant.info.name || ''
+			return asset.info.name || ''
 		} catch(err) {
 			return ''
 		}
@@ -99,8 +106,8 @@
 		          </div>
 		        </nav>
 
-						{#if (selected_merchant_idx == -1) || (merchants[selected_merchant_idx] != undefined)}
-							<Merchant merchants={merchants} selected_merchant_idx={selected_merchant_idx} />
+						{#if (selected_merchant_idx == -1) || ($assets[selected_merchant_idx] != undefined)}
+							<Merchant selected_merchant_idx={selected_merchant_idx} />
 						{/if}
 		      </main>
 				{/if}
@@ -110,20 +117,22 @@
 						<div class="flex items-between">
 			        <div class="pl-4 pt-4 pb-4 w-full">
 			          <h2 on:click={login} class="text-xl font-medium text-gray-900">Merchants</h2>
-			          <form class="hidden mt-4 flex space-x-4" action="#">
-			            <div class="flex-1 min-w-0">
-			              <label for="search" class="sr-only">Search</label>
-			              <div class="relative rounded-md shadow-sm">
-			                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-			                  <!-- Heroicon name: solid/search -->
-			                  <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-			                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-			                  </svg>
-			                </div>
-			                <input type="search" name="search" id="search" class="focus:ring-pink-500 focus:border-pink-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md" placeholder="Search">
-			              </div>
-			            </div>
-			          </form>
+								{#if false}
+				          <form class="mt-4 flex space-x-4" action="#">
+				            <div class="flex-1 min-w-0">
+				              <label for="search" class="sr-only">Search</label>
+				              <div class="relative rounded-md shadow-sm">
+				                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+				                  <!-- Heroicon name: solid/search -->
+				                  <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+				                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+				                  </svg>
+				                </div>
+				                <input type="search" name="search" id="search" class="focus:ring-pink-500 focus:border-pink-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md" placeholder="Search">
+				              </div>
+				            </div>
+				          </form>
+								{/if}
 			        </div>
 							<div>
 								<button type="button" on:click="{()=>select_merchant(-1)}" class="mt-3 mr-4 w-8 h-8 flex items-center justify-center border border-gray-300 shadow-sm rounded text-green-700 bg-white hover:bg-gray-50 focus:outline-none">
@@ -139,21 +148,23 @@
 		          <div class="border-b border-gray-200">
 		            <ul class="relative z-0 divide-y divide-gray-200">
 
-									{#each merchants as merchant, idx}
-			              <li>
-			                <div class="relative px-4 py-3 flex items-center space-x-3 focus-within:bg-gray-200 hover:bg-gray-100" class:selected="{idx==selected_merchant_idx}">
-			                  <div class="flex-1 min-w-0">
-			                    <div class="focus:outline-none cursor-pointer" on:click="{()=>select_merchant(idx)}">
-			                      <!-- Extend touch target to entire panel -->
-			                      <span class="absolute inset-0" aria-hidden="true"></span>
-														<div class="text-sm font-medium text-gray-900">
-															<div class="text-xs text-yellow-600">{merchant.name}</div>
-															<div class="">{merchant_name(merchant)}</div>
-														</div>
-			                    </div>
-			                  </div>
-			                </div>
-			              </li>
+									{#each $assets as asset, idx}
+										{#if isMerchant(asset.name)}
+				              <li>
+				                <div class="relative px-4 py-3 flex items-center space-x-3 focus-within:bg-gray-200 hover:bg-gray-100" class:selected="{idx==selected_merchant_idx}">
+				                  <div class="flex-1 min-w-0">
+				                    <div class="focus:outline-none cursor-pointer" on:click="{()=>select_merchant(idx)}">
+				                      <!-- Extend touch target to entire panel -->
+				                      <span class="absolute inset-0" aria-hidden="true"></span>
+															<div class="text-sm font-medium text-gray-900">
+																<div class="text-xs text-yellow-600">{asset.name}</div>
+																<div class="">{merchant_name(asset)}</div>
+															</div>
+				                    </div>
+				                  </div>
+				                </div>
+				              </li>
+										{/if}
 									{/each}
 
 		            </ul>

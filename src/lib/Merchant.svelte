@@ -1,8 +1,9 @@
 <script>
+  import { assets }  from '$lib/stores.js'
+
   import MerchantDetails	from '$lib/MerchantDetails.svelte'
   import MerchantVouchers	from '$lib/MerchantVouchers.svelte'
 
-  export let merchants
   export let selected_merchant_idx
 
   let active_tab = 'details'
@@ -28,7 +29,7 @@
   .tab:not(active):hover { @apply border-gray-300 text-gray-900; }
 </style>
 
-{#if (selected_merchant_idx == -1) || merchants[selected_merchant_idx]}
+{#if (selected_merchant_idx == -1) || $assets[selected_merchant_idx]}
   <div>
     <div class="max-w-5xl px-4 sm:px-6 lg:px-8">
       <div class="sm:flex sm:items-end sm:space-x-5">
@@ -39,10 +40,10 @@
                 New Merchant
               </h1>
             {:else}
-              <h3 class="text-yellow-600">{merchants[selected_merchant_idx].name}</h3>
+              <h3 class="text-yellow-600">{$assets[selected_merchant_idx].name}</h3>
               <h1 class="text-xl font-semibold text-gray-900 truncate">
-                {#if merchants[selected_merchant_idx].info}
-                  {merchants[selected_merchant_idx].info.name} &nbsp;
+                {#if $assets[selected_merchant_idx].info}
+                  {$assets[selected_merchant_idx].info.name} &nbsp;
                 {/if}
               </h1>
             {/if}
@@ -70,8 +71,8 @@
   </div>
 
   {#if active_tab == 'details'}
-    <MerchantDetails {merchants} {selected_merchant_idx} {state} />
+    <MerchantDetails {selected_merchant_idx} {state} />
   {:else if active_tab == 'vouchers'}
-    <MerchantVouchers {merchants} {selected_merchant_idx} />
+    <MerchantVouchers {selected_merchant_idx} />
   {/if}
 {/if}
