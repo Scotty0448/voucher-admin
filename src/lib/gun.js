@@ -1,5 +1,5 @@
-import Gun from 'gun/gun'
-import SEA from 'gun/sea'
+import Gun from 'gun/gun.js'
+import SEA from 'gun/sea.js'
 
 const mode = process.env.NODE_ENV
 const dev = mode === "development"
