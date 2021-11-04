@@ -5,9 +5,9 @@
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
   import SendVoucher		from '$lib/SendVoucher.svelte'
 
-  export let selected_merchant_idx
+  export let selected_merchant_name
 
-  let selected_voucher
+  let selected_voucher_name
   let state = 'edit'
 
   function getNodeByPath(chain, path) {
@@ -24,18 +24,22 @@
   }
 
   async function init() {
-    selected_voucher = undefined
+    selected_voucher_name = undefined
   }
 
-  $: if (selected_merchant_idx) init()
+  $: if (selected_merchant_name) init()
 
-  async function select_voucher(idx) {
-    selected_voucher = idx
-    state = 'edit'
+  async function select_voucher(voucher_name) {
+    if ($assets[voucher_name] && $assets[voucher_name].info) {
+      selected_voucher_name = voucher_name
+      state = 'edit'
+    } else {
+      selected_voucher_name = undefined
+    }
   }
 
   async function addNewVoucher() {
-    selected_voucher = -1
+    selected_voucher_name = ''
     state = 'add'
   }
 </script>
@@ -66,23 +70,23 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            {#each $assets as asset, idx}
-              {#if (isVoucherOf(asset.name, $assets[selected_merchant_idx].name))}
-                <tr on:click="{()=>select_voucher(idx)}" class="voucher hover:bg-gray-100 hover:text-gray-800 cursor-pointer text-sm text-gray-600" class:selected="{idx==selected_voucher}">
+            {#each Object.keys($assets).sort() as asset_name}
+              {#if (isVoucherOf(asset_name, selected_merchant_name))}
+                <tr on:click="{()=>select_voucher(asset_name)}" class="voucher hover:bg-gray-100 hover:text-gray-800 cursor-pointer text-sm text-gray-600" class:selected="{asset_name==selected_voucher_name}">
                   <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                    {asset.name}
+                    {$assets[asset_name].name}
                   </td>
                   <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                    {asset.amount || ''}
+                    {$assets[asset_name].amount || ''}
                   </td>
                   <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                    {#if $balances[asset.name] != undefined}
-                      {$balances[asset.name].confirmed}
+                    {#if $balances[asset_name] && $assets[asset_name].amount}
+                      {$balances[asset_name].confirmed}
                     {/if}
                   </td>
                   <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
-                    {#if asset.info != undefined}
-                      {asset.info.title}
+                    {#if $assets[asset_name].info != undefined}
+                      {$assets[asset_name].info.title}
                     {/if}
                   </td>
                 </tr>
@@ -100,14 +104,14 @@
   </div>
 </div>
 
-{#if selected_voucher != undefined}
+{#if selected_voucher_name != undefined}
   <div class="-mt-1 sm:px-4 max-w-2xl">
     <div class="border-t border-gray-200 px-5 sm:px-6">
       {#if state == 'add'}
-        <AddVoucher parent_name={$assets[selected_merchant_idx].name} />
+        <AddVoucher parent_name={$assets[selected_merchant_name].name} />
       {:else}
-        <UpdateVoucher {selected_voucher} />
-        <SendVoucher {selected_voucher} />
+        <UpdateVoucher {selected_voucher_name} />
+        <SendVoucher {selected_voucher_name} />
       {/if}
     </div>
   </div>

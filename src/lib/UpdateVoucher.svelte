@@ -3,7 +3,7 @@
   import { assets }     from '$lib/stores.js'
   import Spinner        from '$lib/Spinner.svelte'
 
-  export let selected_voucher
+  export let selected_voucher_name
 
   let voucher
 
@@ -11,12 +11,12 @@
   let error_message = ''
   let wait = false
 
-  $: init(selected_voucher)
+  $: init(selected_voucher_name)
 
-  function init(selected_voucher) {
+  function init(selected_voucher_name) {
     message = ''
     error_message = ''
-    voucher = $assets[selected_voucher]
+    voucher = $assets[selected_voucher_name]
   }
 
   async function updateVoucher() {

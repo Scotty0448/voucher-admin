@@ -3,7 +3,7 @@
   import { root_asset, assets } from '$lib/stores.js'
   import Spinner                from '$lib/Spinner.svelte'
 
-  export let selected_merchant_idx
+  export let selected_merchant_name
   export let state
 
   let asset
@@ -13,12 +13,12 @@
 
   let files
 
-  $: init(selected_merchant_idx)
+  $: init(selected_merchant_name)
 
-  function init(selected_merchant_idx) {
+  function init(selected_merchant_name) {
     asset = { name:`${$root_asset}/`, info:{} }
-    if (selected_merchant_idx != -1) {
-      asset = $assets[selected_merchant_idx]
+    if (selected_merchant_name != '') {
+      asset = $assets[selected_merchant_name]
       if (!asset.info) {
         asset.info = {}
       }

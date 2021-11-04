@@ -4,7 +4,7 @@
   import Spinner              from '$lib/Spinner.svelte'
   import Scanner              from '$lib/Scanner.svelte'
 
-  export let selected_voucher
+  export let selected_voucher_name
 
   let voucher
 
@@ -17,13 +17,13 @@
   let recipient_address = ''
   let qty_to_send
 
-  $: init(selected_voucher)
+  $: init(selected_voucher_name)
   $: if (voucher) { balance = $balances[voucher.name].confirmed }
 
-  function init(selected_voucher) {
+  function init(selected_voucher_name) {
     message = ''
     error_message = ''
-    voucher = $assets[selected_voucher]
+    voucher = $assets[selected_voucher_name]
   }
 
   async function send() {
