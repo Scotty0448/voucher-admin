@@ -17,7 +17,18 @@
   let rdb = rdb_ws_client.rethinkdb
 
   function syncWithDB(address) {
-    rdb_ws_client.connect({host:'wss.rethinkdb.chaintek.net', port:443, path:'/', wsProtocols: ['binary'], secure:true, db:'trito'}).then((conn) => {
+		rdb_ws_client.connect({host:'wss.rethinkdb.chaintek.net', port:443, path:'/', wsProtocols: ['binary'], secure:true, db:'trito'}).then((conn) => {
+
+			rdb.table('info').get('blockcount').run(conn, (err, info) => {
+				$block_count = info.value
+			})
+			rdb.table('info').filter({ key:'blockcount' }).changes().run(conn, (err, changes) => {
+				changes.each((err, change) => {
+					if (change) {
+						$block_count = change.new_val.value
+					}
+				})
+			})
 
 			rdb.table('assets').run(conn, (err, cursor) => {	//.filter((asset)=>{return asset('name').match(`^${$root_asset}/`)})
 				cursor.toArray((err, db_assets) => {
