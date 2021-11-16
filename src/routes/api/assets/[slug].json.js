@@ -13,33 +13,35 @@ export async function get(req) {
   try {
     let resp
     let name = req.params.slug.replace( /\|/g, '/' )
-    if (name == 'root_asset') {
+    if (name == 'coin') {
+      return { status:200, body:{ coin:COIN } }
+    } else if (name == 'root_asset') {
       return { status:200, body:{ root_asset:ROOT_ASSET } }
     } else if (name == 'asset_address') {
       return { status:200, body:{ asset_address:ASSET_ADDRESS } }
-    } else if (name == 'balances') {
-      let balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
-      return { status:200, body:{ balances:balances } }
-    } else {
-      let asset
-      if (req.query.get('mempool') == 'false') {
-        asset = await rpc.getAssetData(name)
-      } else {
-        asset = await rpc.getAssetDataWithMempool(name, ASSET_ADDRESS)
-      }
-      if (asset) {
-        let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
-        asset.balance = asset_balances[name] || 0
-        if (asset.ipfs_hash) {
-          resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
-          if (resp.status == 200) {
-            asset.info = await resp.json()
-          }
-        }
-        return { status:200, body:asset }
-      } else {
-        return { status:404, body:{ message:'Asset not found' } }
-      }
+    // } else if (name == 'balances') {
+    //   let balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
+    //   return { status:200, body:{ balances:balances } }
+    // } else {
+    //   let asset
+    //   if (req.query.get('mempool') == 'false') {
+    //     asset = await rpc.getAssetData(name)
+    //   } else {
+    //     asset = await rpc.getAssetDataWithMempool(name, ASSET_ADDRESS)
+    //   }
+    //   if (asset) {
+    //     let asset_balances = await rpc.listAssetBalancesByAddress(ASSET_ADDRESS)
+    //     asset.balance = asset_balances[name] || 0
+    //     if (asset.ipfs_hash) {
+    //       resp = await fetch(`https://gateway.pinata.cloud/ipfs/${asset.ipfs_hash}`)
+    //       if (resp.status == 200) {
+    //         asset.info = await resp.json()
+    //       }
+    //     }
+    //     return { status:200, body:asset }
+    //   } else {
+    //     return { status:404, body:{ message:'Asset not found' } }
+    //   }
     }
   } catch(err) {
     console.log(err.message)

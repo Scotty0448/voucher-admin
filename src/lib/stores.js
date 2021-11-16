@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store'
 
+export const coin = writable('')
 export const block_count = writable('')
 export const root_asset = writable('')
 export const assets = writable({})

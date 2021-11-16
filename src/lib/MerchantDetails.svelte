@@ -15,6 +15,10 @@
 
   $: init(selected_merchant_name)
 
+  function isEmpty(object) {
+    return Object.keys(object).length === 0
+  }
+
   function init(selected_merchant_name) {
     asset = { name:`${$root_asset}/`, info:{} }
     if (selected_merchant_name != '') {
@@ -45,6 +49,16 @@
   async function addMerchant() {
     if (!$authorized) {
       error_message = 'You are not authorized to add a merchant.'
+      message = ''
+      return
+    }
+    if (asset.name == '' || asset.name == `${$root_asset}` || asset.name == `${$root_asset}/`) {
+      error_message = 'You must specify an asset name.'
+      message = ''
+      return
+    }
+    if (isEmpty(asset.info) || asset.info.name == '') {
+      error_message = 'You must specify a merchant name.'
       message = ''
       return
     }

@@ -4,6 +4,7 @@
   import AddVoucher			from '$lib/AddVoucher.svelte'
   import UpdateVoucher  from '$lib/UpdateVoucher.svelte'
   import SendVoucher		from '$lib/SendVoucher.svelte'
+  import Spinner        from '$lib/Spinner.svelte'
 
   export let selected_merchant_name
 
@@ -87,6 +88,8 @@
                   <td class="px-5 sm:px-3 py-2 whitespace-nowrap">
                     {#if $assets[asset_name].info != undefined}
                       {$assets[asset_name].info.title}
+                    {:else}
+                      <Spinner color="green" />
                     {/if}
                   </td>
                 </tr>

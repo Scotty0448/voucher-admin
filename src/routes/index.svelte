@@ -5,9 +5,10 @@
 
 	import { onMount }  	from 'svelte'
 	import Merchant				from '$lib/Merchant.svelte'
+	import Spinner        from '$lib/Spinner.svelte'
 
-	import { authorized }																	from '$lib/local_stores.js'
-	import { block_count, root_asset, assets, balances }  from '$lib/stores.js'
+	import { authorized }																				from '$lib/local_stores.js'
+	import { coin, block_count, root_asset, assets, balances }  from '$lib/stores.js'
 
 	let selected_merchant_name
 	let state = 'list'
@@ -17,7 +18,7 @@
   let rdb = rdb_ws_client.rethinkdb
 
   function syncWithDB(address) {
-		rdb_ws_client.connect({host:'wss.rethinkdb.chaintek.net', port:443, path:'/', wsProtocols: ['binary'], secure:true, db:'trito'}).then((conn) => {
+		rdb_ws_client.connect({host:'wss.rethinkdb.chaintek.net', port:443, path:'/', wsProtocols: ['binary'], secure:true, db:$coin}).then((conn) => {
 
 			rdb.table('info').get('blockcount').run(conn, (err, info) => {
 				$block_count = info.value
@@ -44,7 +45,7 @@
 	      changes.each((err, change) => {
 					if (change) {
 						if (change.new_val != null) {
-							if (change.new_val.asset.startsWith(`${$root_asset}/`)) {
+							if (change.new_val.name.startsWith(`${$root_asset}/`)) {
 								try { change.new_val.info = JSON.parse(change.new_val.info) } catch(err) {}
 								$assets[change.new_val.name] = change.new_val
 							}
@@ -84,6 +85,8 @@
 		window.process = process
 
 		let resp
+		resp = await fetch(`/api/assets/coin.json`)
+		$coin = (await resp.json()).coin.toLowerCase()
 		resp = await fetch(`/api/assets/root_asset.json`)
 		$root_asset = (await resp.json()).root_asset
 		resp = await fetch(`/api/assets/asset_address.json`)
@@ -97,9 +100,16 @@
 		$authorized = (md5(password) == 'fb1c9e05e53928d05f77f4eab0dc587c')
 	}
 
-	async function select_merchant(merchant_name) {
-		selected_merchant_name = merchant_name
+	async function add_merchant() {
+		selected_merchant_name = ''
 		state = 'detail'
+	}
+
+	async function select_merchant(asset_name) {
+		if (merchant_name($assets[asset_name]) != '') {
+			selected_merchant_name = asset_name
+			state = 'detail'
+		}
 	}
 
 	function isMerchant(name) {
@@ -171,7 +181,7 @@
 								{/if}
 			        </div>
 							<div>
-								<button type="button" on:click="{()=>select_merchant('')}" class="mt-3 mr-4 w-8 h-8 flex items-center justify-center border border-gray-300 shadow-sm rounded text-green-700 bg-white hover:bg-gray-50 focus:outline-none">
+								<button type="button" on:click="{add_merchant}" class="mt-3 mr-4 w-8 h-8 flex items-center justify-center border border-gray-300 shadow-sm rounded text-green-700 bg-white hover:bg-gray-50 focus:outline-none">
 									<!-- Heroicon name: solid/plus -->
 									<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -194,7 +204,11 @@
 				                      <span class="absolute inset-0" aria-hidden="true"></span>
 															<div class="text-sm font-medium text-gray-900">
 																<div class="text-xs text-yellow-600">{asset_name}</div>
-																<div class="">{merchant_name($assets[asset_name])}</div>
+																{#if merchant_name($assets[asset_name]) == ''}
+																	<div style="float:right"><Spinner color="green" /></div>
+																{:else}
+																	<div>{merchant_name($assets[asset_name])} &nbsp;</div>
+																{/if}
 															</div>
 				                    </div>
 				                  </div>
