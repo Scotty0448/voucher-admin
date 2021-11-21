@@ -84,55 +84,57 @@ export async function put(req) {
       }
     }
 
-    let utxos = []
-    try {
-      utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
-    } catch (err) {
-      console.log(err.message)
-      return { status:500, body:{ message:err.message } }
-    }
+    // let utxos = []
+    // try {
+    //   utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
+    // } catch (err) {
+    //   console.log(err.message)
+    //   return { status:500, body:{ message:err.message } }
+    // }
+    //
+    // let burn = coins[COIN].reissueAssetBurnAmount * 100000000
+    // let fee = coins[COIN].txFeePerKb * 100000000
+    //
+    // let remaining = burn + fee
+    // let inputs = []
+    // for (let utxo of utxos) {
+    //   inputs.push({ txid:utxo.txid, vout:utxo.outputIndex })
+    //   remaining -= Number(utxo.satoshis)
+    //   if (remaining <= 0) {
+    //     break
+    //   }
+    // }
+    // if (remaining > 0) {
+    //   console.log('Insufficient funds for burn+fee')
+    //   return { status:500, body:{ message:'Insufficient funds for burn+fee' } }
+    // }
+    //
+    // let asset_utxos = []
+    // try {
+    //   asset_utxos = await rpc.getAssetUtxos(ASSET_ADDRESS, asset.name+'!')
+    //   if (asset_utxos.length == 0) {
+    //     console.log('Admin token not found')
+    //     return { status:500, body:{ message:'Admin token not found' } }
+    //   }
+    // } catch (err) {
+    //   console.log(err.message)
+    //   return { status:500, body:{ message:err.message } }
+    // }
+    //
+    // inputs.push({ txid:asset_utxos[0].txid, vout:asset_utxos[0].outputIndex })
+    //
+    // let outputs = {}
+    // if (remaining < 0) {
+    //   outputs[COIN_ADDRESS] = Math.abs(remaining) / 100000000
+    // }
+    // outputs[coins[COIN].reissueAssetBurnAddress] = coins[COIN].reissueAssetBurnAmount
+    // outputs[ASSET_ADDRESS] = {"reissue":{"asset_name":asset.name,"asset_quantity":reissue_quantity,"ipfs_hash":ipfs_hash}}
+    //
+    // let raw_tx = await rpc.createRawTransaction(inputs, outputs)
+    // let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
+    // let tx_id = await rpc.sendSignedTx(signed_tx.hex)
 
-    let burn = coins[COIN].reissueAssetBurnAmount * 100000000
-    let fee = coins[COIN].txFeePerKb * 100000000
-
-    let remaining = burn + fee
-    let inputs = []
-    for (let utxo of utxos) {
-      inputs.push({ txid:utxo.txid, vout:utxo.outputIndex })
-      remaining -= Number(utxo.satoshis)
-      if (remaining <= 0) {
-        break
-      }
-    }
-    if (remaining > 0) {
-      console.log('Insufficient funds for burn+fee')
-      return { status:500, body:{ message:'Insufficient funds for burn+fee' } }
-    }
-
-    let asset_utxos = []
-    try {
-      asset_utxos = await rpc.getAssetUtxos(ASSET_ADDRESS, asset.name+'!')
-      if (asset_utxos.length == 0) {
-        console.log('Admin token not found')
-        return { status:500, body:{ message:'Admin token not found' } }
-      }
-    } catch (err) {
-      console.log(err.message)
-      return { status:500, body:{ message:err.message } }
-    }
-
-    inputs.push({ txid:asset_utxos[0].txid, vout:asset_utxos[0].outputIndex })
-
-    let outputs = {}
-    if (remaining < 0) {
-      outputs[COIN_ADDRESS] = Math.abs(remaining) / 100000000
-    }
-    outputs[coins[COIN].reissueAssetBurnAddress] = coins[COIN].reissueAssetBurnAmount
-    outputs[ASSET_ADDRESS] = {"reissue":{"asset_name":asset.name,"asset_quantity":reissue_quantity,"ipfs_hash":ipfs_hash}}
-
-    let raw_tx = await rpc.createRawTransaction(inputs, outputs)
-    let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
-    let tx_id = await rpc.sendSignedTx(signed_tx.hex)
+    let tx_id = await rpc.reissue(asset.name, reissue_quantity, ASSET_ADDRESS, ASSET_ADDRESS, true, 0, ipfs_hash)
 
     console.log(`updated asset ${asset.name}`, reissue_quantity, ipfs_hash, tx_id)
     return { status:200, body:{ tx_id:tx_id } }
@@ -157,7 +159,8 @@ export async function post(req) {
 
     let utxos = []
     try {
-      utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
+      // utxos = await rpc.getAddressUtxos(COIN_ADDRESS)
+      utxos = await rpc.listUnspent()
     } catch (err) {
       console.log(err.message)
       return { status:500, body:{ message:err.message } }
@@ -168,8 +171,10 @@ export async function post(req) {
     let remaining = fee
     let inputs = []
     for (let utxo of utxos) {
-      inputs.push({ txid:utxo.txid, vout:utxo.outputIndex })
-      remaining -= Number(utxo.satoshis)
+      // inputs.push({ txid:utxo.txid, vout:utxo.outputIndex })
+      // remaining -= Number(utxo.satoshis)
+      inputs.push({ txid:utxo.txid, vout:utxo.vout })
+      remaining -= Number(utxo.amount * 100000000)
       if (remaining <= 0) {
         break
       }
@@ -214,7 +219,8 @@ export async function post(req) {
     }
 
     let raw_tx = await rpc.createRawTransaction(inputs, outputs)
-    let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
+    // let signed_tx = await rpc.signRawTransaction(raw_tx, null, [COIN_PRIVKEY, ASSET_PRIVKEY])
+    let signed_tx = await rpc.signRawTransaction(raw_tx)
     let tx_id = await rpc.sendSignedTx(signed_tx.hex)
 
     console.log('sent asset', name, qty, tx_id)

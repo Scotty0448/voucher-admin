@@ -170,7 +170,7 @@ export function createRawTransaction(inputs, outputs) {
   )
 }
 
-export function signRawTransaction(raw_tx, prev_txs, priv_keys) {
+export function signRawTransaction(raw_tx, prev_txs=null, priv_keys=null) {
   return new Promise((resolve, reject) =>
     rpcClient.signrawtransaction(raw_tx, prev_txs, priv_keys, async (err, ret) => {
       if (err) {
@@ -194,4 +194,52 @@ export function sendSignedTx(signed_tx) {
       }
     })
   )
+}
+
+export function issue(name, qty, to_address, change_address, units, reissuable, has_ipfs, ipfs_hash) {
+  return new Promise(async (resolve, reject) => {
+    rpcClient.issue(name, qty, to_address, change_address, units, reissuable, has_ipfs, ipfs_hash, (err, ret) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  })
+}
+
+export function reissue(name, qty, to_address, change_address, reissuable, new_units, new_ipfs) {
+  return new Promise(async (resolve, reject) => {
+    rpcClient.reissue(name, qty, to_address, change_address, reissuable, new_units, new_ipfs, (err, ret) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  })
+}
+
+export function transfer(name, qty, to_address) {
+  return new Promise(async (resolve, reject) => {
+    rpcClient.transfer(name, qty, to_address, (err, ret) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  })
+}
+
+export function listUnspent() {
+  return new Promise(async (resolve, reject) => {
+    rpcClient.listunspent((err, ret) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(ret.result)
+      }
+    })
+  })
 }
