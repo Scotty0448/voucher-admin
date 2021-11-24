@@ -3,7 +3,7 @@ dotenv.config()
 const { COIN, ROOT_ASSET, COIN_ADDRESS, COIN_PRIVKEY, ASSET_ADDRESS, ASSET_PRIVKEY } = process.env
 
 import sharp        from 'sharp'
-import fetch        from 'node-fetch'
+// import fetch        from 'node-fetch'
 
 import * as rpc     from '$lib/rpc-client.js'
 import * as pinata  from '$lib/pinata.js'
